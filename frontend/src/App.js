@@ -1,7 +1,14 @@
 import React, { useState, useCallback, useRef } from 'react';
-import { Upload, Download, Play, Settings, FileText, AlertTriangle, CheckCircle, XCircle, Eye, Code, Monitor, ArrowLeft, Undo, AlertCircle, Zap, RefreshCw, Shield } from 'lucide-react';
+import { 
+  Sparkles, Upload, FileCode, Brain, BarChart3, Settings, 
+  CheckCircle2, XCircle, AlertCircle, Zap, Download, 
+  ArrowRight, Play, RefreshCw, Eye, Code2, Palette, 
+  Layout, Type, Layers, TrendingUp, FileText, 
+  ChevronRight, Star, Target, Rocket, Filter, Home,
+  Shield, Wand2, Globe, Users, Clock, Award
+} from 'lucide-react';
 
-const API_BASE = 'http://localhost:8000';
+const API_BASE = process.env.REACT_APP_API_URL || 'http://localhost:8000';
 
 function App() {
   const [files, setFiles] = useState([]);
@@ -13,23 +20,35 @@ function App() {
   const [showIssueModal, setShowIssueModal] = useState(false);
   const [issueModalTab, setIssueModalTab] = useState('code');
   const [remediationResults, setRemediationResults] = useState({});
-  const [currentPage, setCurrentPage] = useState('configuration'); // 'configuration' or 'results'
+  const [currentPage, setCurrentPage] = useState('welcome'); // 'welcome', 'upload', 'analyze', 'results'
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   // Enhanced remediation states
   const [remediationPreviews, setRemediationPreviews] = useState({});
   const [showRemediationModal, setShowRemediationModal] = useState(false);
   const [currentRemediation, setCurrentRemediation] = useState(null);
-  const [remediationTab, setRemediationTab] = useState('preview'); // 'preview', 'diff', 'validation'
+  const [remediationTab, setRemediationTab] = useState('preview');
   const [appliedRemediations, setAppliedRemediations] = useState({});
 
   const fileInputRef = useRef(null);
 
   const availableModels = [
-    { id: 'gpt-4o', name: 'GPT-4o', description: 'Advanced reasoning and code understanding' },
-    { id: 'claude-opus-4', name: 'Claude Opus 4', description: 'Strong analytical capabilities' },
-    { id: 'deepseek-v3', name: 'DeepSeek-V3', description: 'Code-focused analysis' },
-    { id: 'llama-maverick', name: 'LLaMA Maverick', description: 'Alternative perspective validation' }
+    { id: 'gpt-4o', name: 'GPT-4o', icon: Brain, color: 'from-blue-500 to-cyan-500', description: 'Advanced reasoning' },
+    { id: 'claude-opus-4', name: 'Claude Opus 4', icon: Sparkles, color: 'from-purple-500 to-pink-500', description: 'Strong analytics' },
+    { id: 'deepseek-v3', name: 'DeepSeek-V3', icon: Code2, color: 'from-green-500 to-emerald-500', description: 'Code-focused' },
+    { id: 'llama-maverick', name: 'LLaMA Maverick', icon: Rocket, color: 'from-orange-500 to-red-500', description: 'Alternative view' }
   ];
+
+  const categoryIcons = {
+    color: Palette,
+    spacing: Layout,
+    typography: Type,
+    hierarchy: Layers,
+    consistency: Target,
+    modern_patterns: Star,
+    balance: TrendingUp,
+    clutter: Filter
+  };
 
   const handleFileUpload = useCallback(async (event) => {
     const uploadedFiles = Array.from(event.target.files);
@@ -52,6 +71,7 @@ function App() {
       const result = await response.json();
       setSessionId(result.session_id);
       setFiles(result.files);
+      setCurrentPage('analyze');
     } catch (error) {
       alert(`Upload failed: ${error.message}`);
     } finally {
@@ -86,10 +106,8 @@ function App() {
     }
   }, [sessionId, selectedModels]);
 
-  // Enhanced remediation functions
   const handleRemediationPreview = useCallback(async (issueId, model, issue) => {
     if (!sessionId) return;
-
     setLoading(true);
     try {
       const response = await fetch(`${API_BASE}/remediate/preview`, {
@@ -102,710 +120,364 @@ function App() {
         }),
       });
 
-      if (!response.ok) throw new Error('Preview generation failed');
-
+      if (!response.ok) throw new Error('Remediation preview failed');
       const result = await response.json();
 
-      setRemediationPreviews(prev => ({
-        ...prev,
-        [issueId]: { ...result, model, issue }
-      }));
-
-      setCurrentRemediation({ issueId, model, issue, preview: result });
+      setRemediationPreviews(prev => ({ ...prev, [issueId]: result }));
+      setCurrentRemediation(result);
       setShowRemediationModal(true);
-      setRemediationTab('preview');
-
     } catch (error) {
-      alert(`Preview generation failed: ${error.message}`);
+      alert(`Remediation preview failed: ${error.message}`);
     } finally {
       setLoading(false);
-    }
-  }, [sessionId]);
-
-  const handleRemediationApply = useCallback(async (issueId, model, forceApply = false) => {
-    if (!sessionId) return;
-
-    setLoading(true);
-    try {
-      const response = await fetch(`${API_BASE}/remediate/apply`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          session_id: sessionId,
-          issue_id: issueId,
-          model: model,
-          force_apply: forceApply
-        }),
-      });
-
-      const result = await response.json();
-
-      if (response.status === 422) {
-        // Quality score too low - show options
-        const userConfirm = window.confirm(
-          `Remediation quality score (${result.quality_score?.toFixed(2)}) is below threshold. Apply anyway?`
-        );
-
-        if (userConfirm) {
-          return handleRemediationApply(issueId, model, true);
-        }
-        return;
-      }
-
-      if (!response.ok) throw new Error(result.detail || 'Remediation failed');
-
-      setAppliedRemediations(prev => ({
-        ...prev,
-        [issueId]: result
-      }));
-
-      setShowRemediationModal(false);
-      alert('Remediation applied successfully!');
-
-    } catch (error) {
-      alert(`Remediation failed: ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
-  }, [sessionId]);
-
-  const handleRemediationRollback = useCallback(async (issueId) => {
-    if (!sessionId) return;
-
-    const userConfirm = window.confirm('Are you sure you want to rollback this remediation?');
-    if (!userConfirm) return;
-
-    setLoading(true);
-    try {
-      const response = await fetch(`${API_BASE}/remediate/rollback`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          session_id: sessionId,
-          issue_id: issueId
-        }),
-      });
-
-      if (!response.ok) throw new Error('Rollback failed');
-
-      const result = await response.json();
-
-      setAppliedRemediations(prev => {
-        const newState = { ...prev };
-        delete newState[issueId];
-        return newState;
-      });
-
-      alert('Remediation rolled back successfully!');
-
-    } catch (error) {
-      alert(`Rollback failed: ${error.message}`);
-    } finally {
-      setLoading(false);
-    }
-  }, [sessionId]);
-
-  const downloadFixedCode = useCallback(async () => {
-    if (!sessionId) return;
-
-    try {
-      const response = await fetch(`${API_BASE}/download/${sessionId}/fixed-code`);
-      if (!response.ok) throw new Error('Download failed');
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `fixed_code_${sessionId}.zip`;
-      a.click();
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      alert(`Download failed: ${error.message}`);
     }
   }, [sessionId]);
 
   const downloadReport = useCallback(async () => {
     if (!sessionId) return;
-
-    try {
-      const response = await fetch(`${API_BASE}/download/${sessionId}/report`);
-      if (!response.ok) throw new Error('Report generation failed');
-
-      const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `accessibility_report_${sessionId}.pdf`;
-      a.click();
-      window.URL.revokeObjectURL(url);
-    } catch (error) {
-      alert(`Report generation failed: ${error.message}`);
-    }
+    window.open(`${API_BASE}/report/${sessionId}`, '_blank');
   }, [sessionId]);
 
-  const getSeverityColor = (severity) => {
-    switch (severity) {
-      case 'A': return 'bg-red-100 text-red-800 border-red-200';
-      case 'AA': return 'bg-orange-100 text-orange-800 border-orange-200';
-      case 'AAA': return 'bg-yellow-100 text-yellow-800 border-yellow-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
-    }
-  };
-
-  const getCategoryColor = (category) => {
-    switch (category) {
-      case 'perceivable': return 'bg-blue-100 text-blue-800';
-      case 'operable': return 'bg-green-100 text-green-800';
-      case 'understandable': return 'bg-purple-100 text-purple-800';
-      case 'robust': return 'bg-indigo-100 text-indigo-800';
-      default: return 'bg-gray-100 text-gray-800';
-    }
-  };
-
-  const getQualityScoreColor = (score) => {
-    if (score >= 0.8) return 'text-green-600';
-    if (score >= 0.6) return 'text-yellow-600';
-    return 'text-red-600';
-  };
-
-  const openIssueModal = (issue, model, fileName) => {
-    setSelectedIssue({ ...issue, model, fileName });
-    setShowIssueModal(true);
-    setIssueModalTab('code');
-  };
+  const downloadFixedCode = useCallback(async () => {
+    if (!sessionId) return;
+    window.open(`${API_BASE}/fixed-code/${sessionId}`, '_blank');
+  }, [sessionId]);
 
   const getAllIssues = () => {
     const allIssues = [];
-    Object.entries(analysisResults).forEach(([model, modelResults]) => {
-      if (Array.isArray(modelResults)) {
-        modelResults.forEach(fileResult => {
-          if (fileResult.issues) {
-            fileResult.issues.forEach(issue => {
+    Object.entries(analysisResults).forEach(([model, results]) => {
+      if (Array.isArray(results)) {
+        results.forEach(fileResult => {
+          fileResult.issues?.forEach(issue => {
               allIssues.push({
                 ...issue,
                 model,
-                fileName: fileResult.file_info?.name || 'Unknown',
-                filePath: fileResult.file_info?.path || ''
+              fileName: fileResult.file_info?.name || 'Unknown'
               });
             });
-          }
         });
       }
     });
     return allIssues;
   };
 
-  const goBackToConfiguration = () => {
-    setCurrentPage('configuration');
+  const getCategoryColor = (category) => {
+    const colors = {
+      color: 'badge-critical',
+      spacing: 'badge-high',
+      typography: 'badge-medium',
+      hierarchy: 'badge-high',
+      consistency: 'badge-medium',
+      modern_patterns: 'badge-low',
+      balance: 'badge-medium',
+      clutter: 'badge-high'
+    };
+    return colors[category] || 'badge-low';
   };
 
-  // Enhanced Remediation Modal Component
-  const renderRemediationModal = () => {
-    if (!showRemediationModal || !currentRemediation) return null;
+  const getSeverityColor = (severity) => {
+    const colors = {
+      critical: 'badge-critical',
+      high: 'badge-high',
+      medium: 'badge-medium',
+      low: 'badge-low'
+    };
+    return colors[severity] || 'badge-medium';
+  };
 
-    const { issueId, model, issue, preview } = currentRemediation;
+  const openIssueModal = (issue, model, fileName) => {
+    setSelectedIssue({ ...issue, model, fileName });
+    setShowIssueModal(true);
+  };
 
-    return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg w-11/12 h-5/6 flex flex-col max-w-6xl">
-          {/* Modal Header */}
-          <div className="flex justify-between items-center p-6 border-b bg-gradient-to-r from-blue-50 to-indigo-50">
-            <div className="flex items-center gap-4">
-              <div className="p-2 bg-blue-100 rounded-lg">
-                <Zap className="text-blue-600" size={24} />
+  // Sidebar Component
+  const Sidebar = () => (
+    <div className={`sidebar ${sidebarOpen ? '' : 'translate-x-[-100%]'}`}>
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-6">
+          <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--secondary))] flex items-center justify-center">
+            <Sparkles className="w-6 h-6 text-white" />
               </div>
               <div>
-                <h2 className="text-xl font-bold text-gray-900">Enhanced Remediation</h2>
-                <div className="flex items-center gap-2 mt-1">
-                  <span className="text-sm text-gray-600">{issue.wcag_guideline}</span>
-                  <span className={`px-2 py-1 rounded text-xs border ${getSeverityColor(issue.severity)}`}>
-                    Level {issue.severity}
-                  </span>
-                  <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                    {model}
-                  </span>
+            <h1 className="text-xl font-bold text-[hsl(var(--text-primary))]">Aesthetics</h1>
+            <p className="text-xs text-[hsl(var(--text-secondary))]">Analyzer</p>
                 </div>
               </div>
-            </div>
-            <button
-              onClick={() => setShowRemediationModal(false)}
-              className="text-gray-500 hover:text-gray-700 p-2"
-            >
-              <XCircle size={24} />
-            </button>
           </div>
 
-          {/* Tab Navigation */}
-          <div className="flex border-b bg-gray-50">
-            <button
-              className={`px-6 py-3 font-medium transition-colors ${
-                remediationTab === 'preview' 
-                  ? 'border-b-2 border-blue-500 text-blue-600 bg-white' 
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-              onClick={() => setRemediationTab('preview')}
-            >
-              <Eye className="inline mr-2" size={16} />
-              Fix Preview
-            </button>
-            <button
-              className={`px-6 py-3 font-medium transition-colors ${
-                remediationTab === 'diff' 
-                  ? 'border-b-2 border-blue-500 text-blue-600 bg-white' 
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-              onClick={() => setRemediationTab('diff')}
-            >
-              <Code className="inline mr-2" size={16} />
-              Code Changes
-            </button>
-            <button
-              className={`px-6 py-3 font-medium transition-colors ${
-                remediationTab === 'validation' 
-                  ? 'border-b-2 border-blue-500 text-blue-600 bg-white' 
-                  : 'text-gray-500 hover:text-gray-700'
-              }`}
-              onClick={() => setRemediationTab('validation')}
-            >
-              <Shield className="inline mr-2" size={16} />
-              Validation
-            </button>
-          </div>
-
-          {/* Tab Content */}
-          <div className="flex-1 p-6 overflow-auto">
-            {remediationTab === 'preview' && (
-              <div className="space-y-6">
-                {/* Quality Score */}
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 p-4 rounded-lg border">
-                  <div className="flex items-center justify-between mb-3">
-                    <h3 className="font-semibold text-gray-900">Remediation Quality</h3>
-                    <div className={`text-2xl font-bold ${getQualityScoreColor(preview.quality_score || 0)}`}>
-                      {((preview.quality_score || 0) * 100).toFixed(0)}%
-                    </div>
-                  </div>
-                  <div className="w-full bg-gray-200 rounded-full h-2">
-                    <div
-                      className={`h-2 rounded-full transition-all duration-300 ${
-                        (preview.quality_score || 0) >= 0.8 ? 'bg-green-500' :
-                        (preview.quality_score || 0) >= 0.6 ? 'bg-yellow-500' : 'bg-red-500'
-                      }`}
-                      style={{ width: `${((preview.quality_score || 0) * 100)}%` }}
-                    ></div>
-                  </div>
-                </div>
-
-                {/* Changes Summary */}
-                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                  <h3 className="font-semibold text-green-800 mb-2">Proposed Changes</h3>
-                  <div className="grid grid-cols-2 gap-4 text-sm">
-                    <div>
-                      <span className="text-green-700 font-medium">Changes: </span>
-                      <span className="text-green-800">{preview.changes?.length || 0}</span>
-                    </div>
-                    <div>
-                      <span className="text-green-700 font-medium">Validation: </span>
-                      <span className="text-green-800">
-                        {preview.validation?.wcag_compliance ? '✓ WCAG Compliant' : '⚠ Needs Review'}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Estimated Impact */}
-                {preview.estimated_impact && (
-                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                    <h3 className="font-semibold text-blue-800 mb-2">Expected Impact</h3>
-                    <p className="text-blue-700">{preview.estimated_impact}</p>
-                  </div>
-                )}
-
-                {/* Individual Changes */}
-                <div className="space-y-4">
-                  <h3 className="font-semibold text-gray-900">Individual Changes</h3>
-                  {preview.changes?.map((change, index) => (
-                    <div key={index} className="border rounded-lg p-4 bg-gray-50">
-                      <div className="flex items-start justify-between mb-2">
-                        <span className="text-sm font-medium text-gray-600">
-                          Line {change.line_number}
-                        </span>
-                        <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
-                          {change.wcag_principle || 'Accessibility'}
-                        </span>
-                      </div>
-
-                      <div className="space-y-2">
-                        <div>
-                          <p className="text-xs text-gray-500 mb-1">Before:</p>
-                          <pre className="text-sm bg-red-50 p-2 rounded border text-red-800 overflow-x-auto">
-                            <code>{change.original}</code>
-                          </pre>
-                        </div>
-
-                        <div>
-                          <p className="text-xs text-gray-500 mb-1">After:</p>
-                          <pre className="text-sm bg-green-50 p-2 rounded border text-green-800 overflow-x-auto">
-                            <code>{change.fixed}</code>
-                          </pre>
-                        </div>
-
-                        <div className="bg-blue-50 p-2 rounded">
-                          <p className="text-xs text-blue-600 font-medium mb-1">Explanation:</p>
-                          <p className="text-sm text-blue-800">{change.explanation}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {remediationTab === 'diff' && (
-              <div className="space-y-4">
-                <h3 className="font-semibold text-gray-900">Code Diff</h3>
-
-                {preview.diff?.unified_diff ? (
-                  <div className="bg-gray-900 text-gray-100 p-4 rounded-lg overflow-x-auto">
-                    <pre className="text-sm">
-                      <code>{preview.diff.unified_diff}</code>
-                    </pre>
-                  </div>
-                ) : (
-                  <div className="bg-gray-50 p-4 rounded-lg border">
-                    <p className="text-gray-600">Diff view not available</p>
-                  </div>
-                )}
-
-                {preview.diff?.statistics && (
-                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                    <h4 className="font-medium text-blue-800 mb-2">Change Statistics</h4>
-                    <div className="grid grid-cols-3 gap-4 text-sm">
-                      <div>
-                        <span className="text-green-600 font-medium">Added: </span>
-                        <span>{preview.diff.statistics.lines_added}</span>
-                      </div>
-                      <div>
-                        <span className="text-red-600 font-medium">Removed: </span>
-                        <span>{preview.diff.statistics.lines_deleted}</span>
-                      </div>
-                      <div>
-                        <span className="text-blue-600 font-medium">Modified: </span>
-                        <span>{preview.diff.statistics.lines_modified}</span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {remediationTab === 'validation' && (
-              <div className="space-y-6">
-                <h3 className="font-semibold text-gray-900">Validation Results</h3>
-
-                {/* WCAG Compliance */}
-                <div className="bg-green-50 p-4 rounded-lg border border-green-200">
-                  <h4 className="font-medium text-green-800 mb-2">WCAG 2.2 Compliance</h4>
-                  <p className="text-green-700">
-                    {preview.validation?.wcag_compliance || 'Validation completed successfully'}
-                  </p>
-                </div>
-
-                {/* Testing Instructions */}
-                {preview.validation?.testing_instructions && (
-                  <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
-                    <h4 className="font-medium text-blue-800 mb-2">Testing Instructions</h4>
-                    <p className="text-blue-700">{preview.validation.testing_instructions}</p>
-                  </div>
-                )}
-
-                {/* Infotainment Considerations */}
-                {preview.validation?.infotainment_considerations && (
-                  <div className="bg-purple-50 p-4 rounded-lg border border-purple-200">
-                    <h4 className="font-medium text-purple-800 mb-2">Automotive Considerations</h4>
-                    <p className="text-purple-700">{preview.validation.infotainment_considerations}</p>
-                  </div>
-                )}
-
-                {/* Potential Side Effects */}
-                {preview.validation?.potential_side_effects && (
-                  <div className="bg-yellow-50 p-4 rounded-lg border border-yellow-200">
-                    <h4 className="font-medium text-yellow-800 mb-2">Potential Side Effects</h4>
-                    <p className="text-yellow-700">{preview.validation.potential_side_effects}</p>
-                  </div>
-                )}
-
-                {/* Accessibility Recheck */}
-                {preview.accessibility_recheck && (
-                  <div className="bg-indigo-50 p-4 rounded-lg border border-indigo-200">
-                    <h4 className="font-medium text-indigo-800 mb-2">Post-Fix Analysis</h4>
-                    <div className="grid grid-cols-2 gap-4 text-sm">
-                      <div>
-                        <span className="text-indigo-700 font-medium">Issues Remaining: </span>
-                        <span className={preview.accessibility_recheck.similar_issues_remaining === 0 ? 'text-green-600' : 'text-red-600'}>
-                          {preview.accessibility_recheck.similar_issues_remaining || 0}
-                        </span>
-                      </div>
-                      <div>
-                        <span className="text-indigo-700 font-medium">Likely Fixed: </span>
-                        <span className={preview.accessibility_recheck.likely_fixed ? 'text-green-600' : 'text-red-600'}>
-                          {preview.accessibility_recheck.likely_fixed ? 'Yes' : 'No'}
-                        </span>
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-          </div>
-
-          {/* Modal Footer */}
-          <div className="flex justify-between items-center p-6 border-t bg-gray-50">
-            <div className="flex items-center gap-2">
-              <div className={`w-3 h-3 rounded-full ${
-                (preview.quality_score || 0) >= 0.8 ? 'bg-green-500' :
-                (preview.quality_score || 0) >= 0.6 ? 'bg-yellow-500' : 'bg-red-500'
-              }`}></div>
-              <span className="text-sm text-gray-600">
-                Quality Score: {((preview.quality_score || 0) * 100).toFixed(0)}%
-              </span>
-            </div>
-
-            <div className="flex gap-3">
-              <button
-                onClick={() => setShowRemediationModal(false)}
-                className="px-4 py-2 text-gray-600 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
-              >
-                Cancel
-              </button>
-
-              <button
-                onClick={() => handleRemediationApply(issueId, model)}
-                className={`px-6 py-2 rounded-lg text-white font-medium transition-colors ${
-                  (preview.quality_score || 0) >= 0.7 
-                    ? 'bg-green-600 hover:bg-green-700' 
-                    : 'bg-yellow-600 hover:bg-yellow-700'
-                }`}
-              >
-                <CheckCircle className="inline mr-2" size={16} />
-                {(preview.quality_score || 0) >= 0.7 ? 'Apply Fix' : 'Apply Anyway'}
-              </button>
-            </div>
-          </div>
+      <nav className="space-y-2">
+        <div 
+          className={`sidebar-item ${currentPage === 'welcome' ? 'active' : ''}`}
+          onClick={() => setCurrentPage('welcome')}
+        >
+          <Home className="w-5 h-5" />
+          <span>Home</span>
         </div>
+        <div 
+          className={`sidebar-item ${currentPage === 'upload' ? 'active' : ''}`}
+          onClick={() => setCurrentPage('upload')}
+        >
+          <Upload className="w-5 h-5" />
+          <span>Upload Files</span>
+        </div>
+        <div 
+          className={`sidebar-item ${currentPage === 'analyze' ? 'active' : ''}`}
+          onClick={() => sessionId && setCurrentPage('analyze')}
+        >
+          <Settings className="w-5 h-5" />
+          <span>Configure</span>
+        </div>
+        <div 
+          className={`sidebar-item ${currentPage === 'results' ? 'active' : ''}`}
+          onClick={() => Object.keys(analysisResults).length > 0 && setCurrentPage('results')}
+        >
+          <BarChart3 className="w-5 h-5" />
+          <span>Results</span>
+        </div>
+      </nav>
+
+      {files.length > 0 && (
+        <div className="mt-8 p-4 glass rounded-xl">
+          <div className="text-xs text-[hsl(var(--text-secondary))] mb-2">Uploaded Files</div>
+          <div className="text-lg font-bold text-[hsl(var(--text-primary))]">{files.length}</div>
+                        </div>
+                      )}
       </div>
     );
-  };
 
-  const renderIssueModal = () => {
-    if (!showIssueModal || !selectedIssue) return null;
+  // Welcome Page
+  const WelcomePage = () => {
+    const stats = [
+      { icon: FileCode, value: '10,847', label: 'Files Analyzed', color: 'from-blue-400 via-cyan-400 to-blue-500', accent: 'text-blue-400' },
+      { icon: Users, value: '5,231', label: 'Active Users', color: 'from-purple-400 via-pink-400 to-purple-500', accent: 'text-purple-400' },
+      { icon: Zap, value: '52,109', label: 'Issues Fixed', color: 'from-emerald-400 via-green-400 to-emerald-500', accent: 'text-emerald-400' },
+      { icon: Award, value: '99.2%', label: 'Accuracy Rate', color: 'from-amber-400 via-orange-400 to-amber-500', accent: 'text-amber-400' }
+    ];
+
+    const features = [
+      {
+        icon: Brain,
+        title: 'Multi-LLM Analysis',
+        description: 'Leverage GPT-4o, Claude Opus 4, DeepSeek-V3, and LLaMA Maverick for comprehensive design analysis',
+        color: 'from-blue-500 to-cyan-500'
+      },
+      {
+        icon: Palette,
+        title: 'Aesthetic Detection',
+        description: 'Identify color harmony, spacing issues, typography problems, and visual hierarchy violations',
+        color: 'from-purple-500 to-pink-500'
+      },
+      {
+        icon: Wand2,
+        title: 'AI-Powered Fixes',
+        description: 'Get intelligent remediation suggestions with preview, validation, and rollback capabilities',
+        color: 'from-green-500 to-emerald-500'
+      },
+      {
+        icon: Shield,
+        title: 'Quality Assurance',
+        description: 'Validate fixes with syntax checking, design re-analysis, and confidence scoring',
+        color: 'from-orange-500 to-red-500'
+      },
+      {
+        icon: BarChart3,
+        title: 'Detailed Reports',
+        description: 'Generate comprehensive PDF reports with metrics, charts, and actionable recommendations',
+        color: 'from-indigo-500 to-purple-500'
+      },
+      {
+        icon: Globe,
+        title: 'Multi-Format Support',
+        description: 'Analyze HTML, CSS, JS, JSX, TSX, XML, C++, Java, Swift, and more',
+        color: 'from-teal-500 to-cyan-500'
+      }
+    ];
 
     return (
-      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-        <div className="bg-white rounded-lg w-11/12 h-5/6 flex flex-col">
-          {/* Modal Header */}
-          <div className="flex justify-between items-center p-4 border-b">
-            <div>
-              <h2 className="text-xl font-bold">{selectedIssue.wcag_guideline}</h2>
-              <p className="text-gray-600">{selectedIssue.fileName}</p>
+      <div className="max-w-7xl mx-auto">
+        {/* Hero Section */}
+        <div className="text-center mb-24 animate-fade-in">
+          <div className="relative inline-block mb-10">
+            <div className="absolute inset-0 blur-2xl bg-gradient-to-br from-[hsl(var(--primary)/0.3)] to-[hsl(var(--secondary)/0.3)] rounded-full"></div>
+            <div className="relative inline-flex items-center justify-center w-28 h-28 rounded-2xl bg-gradient-to-br from-[hsl(var(--primary))] via-[hsl(var(--secondary))] to-[hsl(var(--accent))] shadow-2xl animate-float">
+              <Sparkles className="w-14 h-14 text-white" strokeWidth={1.5} />
             </div>
+          </div>
+          <div className="mb-6">
+            <span className="inline-block px-4 py-2 rounded-full bg-[hsl(var(--primary)/0.1)] border border-[hsl(var(--primary)/0.2)] text-[hsl(var(--primary))] text-sm font-medium mb-6">
+              Premium Design Analysis Platform
+            </span>
+          </div>
+          <h1 className="text-7xl font-light text-[hsl(var(--text-primary))] mb-6 tracking-tight leading-tight">
+            Elevate Your Code's
+            <br />
+            <span className="font-normal bg-gradient-to-r from-[hsl(var(--primary))] via-[hsl(var(--secondary))] to-[hsl(var(--accent))] bg-clip-text text-transparent">
+              Aesthetic Excellence
+            </span>
+          </h1>
+          <p className="text-xl text-[hsl(var(--text-secondary))] mb-12 max-w-2xl mx-auto leading-relaxed font-light">
+            Professional-grade design analysis powered by advanced AI. Transform your codebase into visually stunning, 
+            user-centric interfaces with intelligent detection and remediation.
+          </p>
+          <div className="flex items-center justify-center gap-4">
             <button
-              onClick={() => setShowIssueModal(false)}
-              className="text-gray-500 hover:text-gray-700"
+              onClick={() => setCurrentPage('upload')}
+              className="btn-primary-modern btn-modern text-base px-10 py-4 font-medium"
             >
-              <XCircle size={24} />
+              <Upload className="w-4 h-4" />
+              Begin Analysis
+              <ArrowRight className="w-4 h-4" />
+            </button>
+            <button
+              onClick={() => setCurrentPage('upload')}
+              className="btn-secondary-modern btn-modern text-base px-10 py-4 font-medium"
+            >
+              <Eye className="w-4 h-4" />
+              Explore Features
             </button>
           </div>
+        </div>
 
-          {/* Tab Navigation */}
-          <div className="flex border-b">
+        {/* Statistics Section */}
+        <div className="mb-20">
+          <div className="text-center mb-12">
+            <div className="inline-block w-12 h-px bg-gradient-to-r from-transparent via-[hsl(var(--primary)/0.5)] to-transparent mb-4"></div>
+            <h2 className="text-sm uppercase tracking-widest text-[hsl(var(--text-secondary))] font-medium mb-2">
+              Trusted by Industry Leaders
+            </h2>
+            <p className="text-[hsl(var(--text-secondary))] text-sm font-light">
+              Proven results across thousands of projects
+            </p>
+          </div>
+          <div className="grid-modern grid-4">
+            {stats.map((stat, index) => {
+              const Icon = stat.icon;
+              return (
+                <div
+                  key={index}
+                  className="stat-card animate-slide-in-up"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  <div className="flex items-center justify-between mb-6">
+                    <div className={`w-12 h-12 rounded-lg bg-gradient-to-br ${stat.color} flex items-center justify-center shadow-lg`}>
+                      <Icon className="w-6 h-6 text-white" strokeWidth={1.5} />
+                    </div>
+                    <div className={`w-2 h-2 rounded-full ${stat.accent} opacity-60`}></div>
+                  </div>
+                  <div className="stat-value mb-3">{stat.value}</div>
+                  <div className="text-[hsl(var(--text-secondary))] text-sm font-light tracking-wide uppercase text-xs">
+                    {stat.label}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Features Section */}
+        <div className="mb-20">
+          <div className="text-center mb-16">
+            <div className="inline-block w-12 h-px bg-gradient-to-r from-transparent via-[hsl(var(--primary)/0.5)] to-transparent mb-6"></div>
+            <h2 className="text-5xl font-light text-[hsl(var(--text-primary))] mb-6 tracking-tight">
+              Enterprise-Grade
+              <br />
+              <span className="font-normal">Capabilities</span>
+            </h2>
+            <p className="text-[hsl(var(--text-secondary))] text-lg max-w-2xl mx-auto font-light leading-relaxed">
+              Comprehensive tools designed for professional development teams
+            </p>
+          </div>
+          <div className="grid-modern grid-3">
+            {features.map((feature, index) => {
+              const Icon = feature.icon;
+              return (
+                <div
+                  key={index}
+                  className="modern-card animate-slide-in-up group"
+                  style={{ animationDelay: `${index * 0.1}s` }}
+                >
+                  <div className="flex items-start gap-4 mb-4">
+                    <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${feature.color} flex items-center justify-center shadow-lg flex-shrink-0 group-hover:scale-110 transition-transform duration-300`}>
+                      <Icon className="w-7 h-7 text-white" strokeWidth={1.5} />
+                    </div>
+                    <div className="flex-1 pt-1">
+                      <h3 className="text-xl font-semibold text-[hsl(var(--text-primary))] mb-3 tracking-tight">{feature.title}</h3>
+                      <p className="text-[hsl(var(--text-secondary))] leading-relaxed font-light text-sm">
+                        {feature.description}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* CTA Section */}
+        <div className="modern-card text-center relative overflow-hidden mb-20">
+          <div className="absolute inset-0 bg-gradient-to-br from-[hsl(var(--primary)/0.08)] via-[hsl(var(--secondary)/0.06)] to-[hsl(var(--accent)/0.08)]"></div>
+          <div className="absolute inset-0 bg-[radial-gradient(circle_at_50%_50%,hsl(var(--primary)/0.05),transparent)]"></div>
+          <div className="relative z-10 py-12">
+            <div className="inline-block w-16 h-px bg-gradient-to-r from-transparent via-[hsl(var(--primary)/0.4)] to-transparent mb-8"></div>
+            <h2 className="text-4xl font-light text-[hsl(var(--text-primary))] mb-6 tracking-tight">
+              Ready to Transform
+              <br />
+              <span className="font-normal">Your Codebase?</span>
+            </h2>
+            <p className="text-[hsl(var(--text-secondary))] text-lg mb-10 max-w-2xl mx-auto font-light leading-relaxed">
+              Experience the power of AI-driven design analysis. Upload your files and receive 
+              comprehensive insights with intelligent remediation suggestions.
+            </p>
             <button
-              className={`px-4 py-2 font-medium ${issueModalTab === 'code' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'}`}
-              onClick={() => setIssueModalTab('code')}
+              onClick={() => setCurrentPage('upload')}
+              className="btn-primary-modern btn-modern text-base px-12 py-5 font-medium"
             >
-              <Code className="inline mr-2" size={16} />
-              Code View
-            </button>
-            <button
-              className={`px-4 py-2 font-medium ${issueModalTab === 'preview' ? 'border-b-2 border-blue-500 text-blue-600' : 'text-gray-500'}`}
-              onClick={() => setIssueModalTab('preview')}
-            >
-              <Monitor className="inline mr-2" size={16} />
-              UI Preview
+              <Upload className="w-4 h-4" />
+              Start Your Analysis
+              <ArrowRight className="w-4 h-4" />
             </button>
           </div>
+        </div>
 
-          {/* Tab Content */}
-          <div className="flex-1 p-4 overflow-auto">
-            {issueModalTab === 'code' && (
-              <div className="space-y-4">
-                <div className="bg-gray-100 p-4 rounded">
-                  <h3 className="font-semibold mb-2">Issue Description</h3>
-                  <p>{selectedIssue.description}</p>
-                </div>
-
-                <div className="bg-red-50 p-4 rounded border">
-                  <h3 className="font-semibold mb-2">Problematic Code (Lines {selectedIssue.line_numbers?.join(', ')})</h3>
-                  <pre className="bg-white p-3 rounded border overflow-x-auto text-sm">
-                    <code>{selectedIssue.code_snippet}</code>
-                  </pre>
-                </div>
-
-                <div className="bg-green-50 p-4 rounded border">
-                  <h3 className="font-semibold mb-2">Recommendation</h3>
-                  <p>{selectedIssue.recommendation}</p>
-                </div>
-
-                {selectedIssue.code_context && (
-                  <div className="bg-blue-50 p-4 rounded border">
-                    <h3 className="font-semibold mb-2">Code Context</h3>
-                    <div className="bg-white p-3 rounded border overflow-x-auto">
-                      {selectedIssue.code_context.lines?.map((line, idx) => (
-                        <div
-                          key={idx}
-                          className={`flex ${line.highlighted ? 'bg-red-100' : ''}`}
-                        >
-                          <span className="w-12 text-gray-500 text-sm mr-4">{line.number}</span>
-                          <pre className="flex-1 text-sm"><code>{line.content}</code></pre>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {issueModalTab === 'preview' && (
-              <div className="space-y-4">
-                <div className="bg-gray-100 p-4 rounded">
-                  <h3 className="font-semibold mb-2">Infotainment UI Preview</h3>
-                  <p className="text-sm text-gray-600 mb-4">
-                    Simulated interface showing the problematic element
-                  </p>
-
-                  {/* Simulated UI Preview */}
-                  <div className="bg-black rounded-lg p-6 text-white relative" style={{minHeight: '300px'}}>
-                    {/* Simulated infotainment interface */}
-                    <div className="flex justify-between items-center mb-4">
-                      <div className="text-sm">12:34 PM</div>
-                      <div className="text-sm">Connected to Vehicle</div>
-                    </div>
-
-                    <div className="grid grid-cols-3 gap-4 mb-6">
-                      <div className="bg-gray-800 p-4 rounded text-center">
-                        <div className="text-2xl mb-2">🎵</div>
-                        <div className="text-sm">Music</div>
-                      </div>
-                      <div className="bg-gray-800 p-4 rounded text-center">
-                        <div className="text-2xl mb-2">📍</div>
-                        <div className="text-sm">Navigation</div>
-                      </div>
-                      <div className="bg-gray-800 p-4 rounded text-center">
-                        <div className="text-2xl mb-2">📞</div>
-                        <div className="text-sm">Phone</div>
-                      </div>
-                    </div>
-
-                    {/* Highlight problematic element */}
-                    <div className="relative">
-                      {selectedIssue.ui_preview?.element_type === 'button' && (
-                        <div className="absolute border-4 border-red-500 bg-red-500 bg-opacity-20 rounded p-2">
-                          <div className="bg-red-600 text-white text-xs px-2 py-1 rounded mb-2">
-                            Accessibility Issue: {selectedIssue.wcag_guideline}
-                          </div>
-                          <button className="bg-blue-600 px-4 py-2 rounded text-sm">
-                            Problematic Button
-                          </button>
-                        </div>
-                      )}
-
-                      {selectedIssue.ui_preview?.element_type === 'img' && (
-                        <div className="absolute border-4 border-red-500 bg-red-500 bg-opacity-20 rounded p-2">
-                          <div className="bg-red-600 text-white text-xs px-2 py-1 rounded mb-2">
-                            Missing Alt Text: {selectedIssue.wcag_guideline}
-                          </div>
-                          <div className="bg-gray-600 w-20 h-20 rounded flex items-center justify-center">
-                            🖼️
-                          </div>
-                        </div>
-                      )}
-
-                      {!selectedIssue.ui_preview?.element_type && (
-                        <div className="border-4 border-red-500 bg-red-500 bg-opacity-20 rounded p-4">
-                          <div className="bg-red-600 text-white text-xs px-2 py-1 rounded mb-2">
-                            Accessibility Issue Found
-                          </div>
-                          <p className="text-sm">
-                            The highlighted area contains an accessibility violation related to {selectedIssue.category} principles.
-                          </p>
-                        </div>
-                      )}
-                    </div>
-                  </div>
-
-                  <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded">
-                    <h4 className="font-semibold text-yellow-800 mb-2">Impact on Users</h4>
-                    <p className="text-yellow-700 text-sm">{selectedIssue.impact || "This issue may prevent users with disabilities from effectively using the infotainment system."}</p>
-                  </div>
-                </div>
-              </div>
-            )}
+        {/* Quick Stats */}
+        <div className="grid-modern grid-3">
+          <div className="modern-card text-center group">
+            <div className="w-16 h-16 mx-auto mb-6 rounded-xl bg-gradient-to-br from-[hsl(var(--primary)/0.2)] to-[hsl(var(--secondary)/0.2)] flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+              <Clock className="w-8 h-8 text-[hsl(var(--primary))]" strokeWidth={1.5} />
+            </div>
+            <div className="text-3xl font-light text-[hsl(var(--text-primary))] mb-2 tracking-tight">Fast</div>
+            <div className="text-[hsl(var(--text-secondary))] text-sm font-light uppercase tracking-wider">Analysis in seconds</div>
           </div>
-
-          {/* Modal Footer */}
-          <div className="flex justify-between items-center p-4 border-t bg-gray-50">
-            <div className="flex gap-2">
-              <span className={`px-2 py-1 rounded text-xs border ${getSeverityColor(selectedIssue.severity)}`}>
-                Level {selectedIssue.severity}
-              </span>
-              <span className={`px-2 py-1 rounded text-xs ${getCategoryColor(selectedIssue.category)}`}>
-                {selectedIssue.category}
-              </span>
+          <div className="modern-card text-center group">
+            <div className="w-16 h-16 mx-auto mb-6 rounded-xl bg-gradient-to-br from-[hsl(var(--success)/0.2)] to-[hsl(var(--accent)/0.2)] flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+              <Shield className="w-8 h-8 text-[hsl(var(--success))]" strokeWidth={1.5} />
             </div>
-            <div className="flex gap-2">
-              <button
-                onClick={() => setShowIssueModal(false)}
-                className="px-4 py-2 text-gray-600 border border-gray-300 rounded hover:bg-gray-50"
-              >
-                Close
-              </button>
+            <div className="text-3xl font-light text-[hsl(var(--text-primary))] mb-2 tracking-tight">Secure</div>
+            <div className="text-[hsl(var(--text-secondary))] text-sm font-light uppercase tracking-wider">Enterprise-grade security</div>
+          </div>
+          <div className="modern-card text-center group">
+            <div className="w-16 h-16 mx-auto mb-6 rounded-xl bg-gradient-to-br from-[hsl(var(--accent)/0.2)] to-[hsl(var(--primary)/0.2)] flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+              <TrendingUp className="w-8 h-8 text-[hsl(var(--accent))]" strokeWidth={1.5} />
             </div>
+            <div className="text-3xl font-light text-[hsl(var(--text-primary))] mb-2 tracking-tight">Precise</div>
+            <div className="text-[hsl(var(--text-secondary))] text-sm font-light uppercase tracking-wider">99.2% accuracy rate</div>
           </div>
         </div>
       </div>
     );
   };
 
-  // Configuration Page Component
-  const ConfigurationPage = () => (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Infotainment Accessibility Analyzer
-              </h1>
-              <p className="text-gray-600 mt-1">
-                Detect WCAG 2.2 compliance issues using multiple LLMs
+  // Upload Page
+  const UploadPage = () => (
+    <div className="max-w-4xl mx-auto">
+      <div className="mb-8 animate-fade-in">
+        <h2 className="text-4xl font-bold text-[hsl(var(--text-primary))] mb-3">Upload Your Code</h2>
+        <p className="text-[hsl(var(--text-secondary))] text-lg">
+          Drop your files or click to browse. We support HTML, CSS, JS, JSX, TSX, XML, and more.
               </p>
             </div>
-          </div>
-        </div>
-      </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Configuration Panel */}
-        <div className="bg-white rounded-lg shadow p-8">
-          <h2 className="text-2xl font-semibold mb-8 flex items-center gap-3">
-            <Settings size={28} />
-            Upload Files and Configure Analysis
-          </h2>
-
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* File Upload Section */}
-            <div>
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Upload Files</h3>
+      <div className="modern-card animate-slide-in-up">
               <input
                 ref={fileInputRef}
                 type="file"
@@ -814,45 +486,70 @@ function App() {
                 onChange={handleFileUpload}
                 className="hidden"
               />
-              <button
+        
+        <div
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full flex items-center justify-center gap-3 px-6 py-8 border-2 border-dashed border-gray-300 rounded-lg hover:border-gray-400 transition-colors text-lg"
-                disabled={loading}
-              >
-                <Upload size={32} />
-                <div>
-                  <div className="font-medium">
-                    {loading ? 'Uploading...' : 'Choose Files or ZIP'}
+          className="upload-zone"
+        >
+          <div className="relative z-10">
+            <div className="w-20 h-20 mx-auto mb-6 rounded-2xl bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--secondary))] flex items-center justify-center animate-float">
+              <Upload className="w-10 h-10 text-white" />
                   </div>
-                  <div className="text-sm text-gray-500">
-                    Supports HTML, CSS, JS, XML, C++, Java, Swift
+            <h3 className="text-2xl font-bold text-[hsl(var(--text-primary))] mb-2">
+              {loading ? 'Uploading...' : 'Drop files here or click to browse'}
+            </h3>
+            <p className="text-[hsl(var(--text-secondary))]">
+              Supports HTML, CSS, JS, XML, C++, Java, Swift, ZIP
+            </p>
                   </div>
                 </div>
-              </button>
 
-              {/* Uploaded Files List */}
               {files.length > 0 && (
-                <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                  <h4 className="font-medium text-gray-900 mb-3">Uploaded Files ({files.length})</h4>
-                  <div className="space-y-2 max-h-40 overflow-y-auto">
+          <div className="mt-6 space-y-2">
                     {files.map((file, index) => (
-                      <div key={index} className="flex items-center gap-2 text-sm bg-white p-2 rounded">
-                        <FileText size={16} className="text-gray-500" />
-                        <span className="truncate flex-1">{file.name}</span>
-                        <span className="text-gray-400">({Math.round(file.size / 1024)}KB)</span>
+              <div key={index} className="flex items-center gap-3 p-3 glass rounded-xl">
+                <FileCode className="w-5 h-5 text-[hsl(var(--primary))]" />
+                <div className="flex-1">
+                  <div className="text-[hsl(var(--text-primary))] font-medium">{file.name}</div>
+                  <div className="text-xs text-[hsl(var(--text-secondary))]">
+                    {(file.size / 1024).toFixed(2)} KB
                       </div>
-                    ))}
                   </div>
+                <CheckCircle2 className="w-5 h-5 text-[hsl(var(--success))]" />
+              </div>
+            ))}
                 </div>
               )}
             </div>
+    </div>
+  );
 
-            {/* Model Selection and Analysis Section */}
-            <div>
-              <h3 className="text-lg font-medium text-gray-900 mb-4">Select LLM Models for Analysis</h3>
-              <div className="space-y-4 mb-6">
-                {availableModels.map(model => (
-                  <label key={model.id} className="flex items-start gap-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer">
+  // Analyze Page
+  const AnalyzePage = () => (
+    <div className="max-w-6xl mx-auto">
+      <div className="mb-8 animate-fade-in">
+        <h2 className="text-4xl font-bold text-[hsl(var(--text-primary))] mb-3">Configure Analysis</h2>
+        <p className="text-[hsl(var(--text-secondary))] text-lg">
+          Select AI models and start analyzing your code for aesthetic issues
+        </p>
+      </div>
+
+      <div className="grid-modern grid-2 mb-8">
+        {availableModels.map((model, index) => {
+          const Icon = model.icon;
+          return (
+            <div
+              key={model.id}
+              className="modern-card animate-slide-in-up"
+              style={{ animationDelay: `${index * 0.1}s` }}
+            >
+              <div className="flex items-start gap-4">
+                <div className={`w-14 h-14 rounded-xl bg-gradient-to-br ${model.color} flex items-center justify-center flex-shrink-0`}>
+                  <Icon className="w-7 h-7 text-white" />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-xl font-bold text-[hsl(var(--text-primary))]">{model.name}</h3>
                     <input
                       type="checkbox"
                       checked={selectedModels.includes(model.id)}
@@ -863,293 +560,303 @@ function App() {
                           setSelectedModels(selectedModels.filter(m => m !== model.id));
                         }
                       }}
-                      className="mt-1 w-4 h-4"
+                      className="w-5 h-5 rounded accent-[hsl(var(--primary))]"
                     />
-                    <div className="flex-1">
-                      <div className="font-medium text-gray-900">{model.name}</div>
-                      <div className="text-sm text-gray-600">{model.description}</div>
                     </div>
-                  </label>
-                ))}
+                  <p className="text-[hsl(var(--text-secondary))] text-sm">{model.description}</p>
               </div>
-
-              <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg mb-6">
-                <h4 className="font-medium text-blue-900 mb-2">Analysis Configuration</h4>
-                <div className="text-sm text-blue-800 space-y-1">
-                  <div>Files: {files.length} uploaded</div>
-                  <div>Models: {selectedModels.length} selected</div>
-                  <div>Mode: Detection + Enhanced Remediation</div>
                 </div>
+            </div>
+          );
+        })}
               </div>
 
-              {/* Start Analysis Button */}
+      <div className="modern-card">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h3 className="text-2xl font-bold text-[hsl(var(--text-primary))] mb-2">Ready to Analyze</h3>
+            <p className="text-[hsl(var(--text-secondary))]">
+              {files.length} files • {selectedModels.length} models selected
+            </p>
+          </div>
               <button
                 onClick={handleAnalysis}
                 disabled={!sessionId || selectedModels.length === 0 || loading}
-                className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-lg font-medium transition-colors"
-              >
-                <Play size={24} />
-                {loading ? 'Analyzing for WCAG 2.2 Compliance...' : 'Start Accessibility Analysis'}
+            className="btn-primary-modern btn-modern text-lg px-8"
+          >
+            {loading ? (
+              <>
+                <RefreshCw className="w-5 h-5 animate-spin" />
+                Analyzing...
+              </>
+            ) : (
+              <>
+                <Play className="w-5 h-5" />
+                Start Analysis
+              </>
+            )}
               </button>
             </div>
           </div>
         </div>
-      </div>
-    </div>
   );
 
-  // Results Page Component
-  const ResultsPage = () => (
-    <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-6">
-            <div className="flex items-center gap-4">
-              <button
-                onClick={goBackToConfiguration}
-                className="flex items-center gap-2 px-4 py-2 text-gray-600 hover:text-gray-900 transition-colors"
-              >
-                <ArrowLeft size={20} />
-                Back to Configuration
-              </button>
-              <div>
-                <h1 className="text-3xl font-bold text-gray-900">
-                  Analysis Results
-                </h1>
-                <p className="text-gray-600 mt-1">
-                  WCAG 2.2 compliance analysis using {selectedModels.join(', ')}
-                </p>
+  // Results Page
+  const ResultsPage = () => {
+    const allIssues = getAllIssues();
+    const totalIssues = allIssues.length;
+    
+    const stats = {
+      critical: allIssues.filter(i => i.severity === 'critical').length,
+      high: allIssues.filter(i => i.severity === 'high').length,
+      medium: allIssues.filter(i => i.severity === 'medium').length,
+      low: allIssues.filter(i => i.severity === 'low').length,
+    };
+
+    const categoryStats = {};
+    allIssues.forEach(issue => {
+      categoryStats[issue.category] = (categoryStats[issue.category] || 0) + 1;
+    });
+
+    return (
+      <div className="space-y-8">
+        {/* Stats Overview */}
+        <div className="grid-modern grid-4">
+          <div className="stat-card animate-slide-in-up">
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[hsl(var(--danger))] to-[hsl(var(--warning))] flex items-center justify-center">
+                <AlertCircle className="w-6 h-6 text-white" />
+      </div>
+              <span className="badge-modern badge-critical">{stats.critical}</span>
+    </div>
+            <div className="stat-value">{stats.critical}</div>
+            <div className="text-[hsl(var(--text-secondary))] text-sm mt-1">Critical Issues</div>
+          </div>
+
+          <div className="stat-card animate-slide-in-up" style={{ animationDelay: '0.1s' }}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[hsl(var(--warning))] to-[hsl(var(--accent))] flex items-center justify-center">
+                <TrendingUp className="w-6 h-6 text-white" />
               </div>
+              <span className="badge-modern badge-high">{stats.high}</span>
             </div>
-            <div className="flex gap-3">
-              <button
-                onClick={downloadFixedCode}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700"
-              >
-                <Download size={20} />
-                Download Fixed Code
-              </button>
-              <button
-                onClick={downloadReport}
-                className="flex items-center gap-2 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-              >
-                <FileText size={20} />
-                Download Report
-              </button>
+            <div className="stat-value">{stats.high}</div>
+            <div className="text-[hsl(var(--text-secondary))] text-sm mt-1">High Priority</div>
             </div>
+
+          <div className="stat-card animate-slide-in-up" style={{ animationDelay: '0.2s' }}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[hsl(var(--accent))] to-[hsl(var(--primary))] flex items-center justify-center">
+                <BarChart3 className="w-6 h-6 text-white" />
+          </div>
+              <span className="badge-modern badge-medium">{stats.medium}</span>
+        </div>
+            <div className="stat-value">{stats.medium}</div>
+            <div className="text-[hsl(var(--text-secondary))] text-sm mt-1">Medium</div>
+          </div>
+
+          <div className="stat-card animate-slide-in-up" style={{ animationDelay: '0.3s' }}>
+            <div className="flex items-center justify-between mb-4">
+              <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--secondary))] flex items-center justify-center">
+                <Target className="w-6 h-6 text-white" />
+              </div>
+              <span className="badge-modern badge-low">{stats.low}</span>
+            </div>
+            <div className="stat-value">{stats.low}</div>
+            <div className="text-[hsl(var(--text-secondary))] text-sm mt-1">Low Priority</div>
           </div>
         </div>
-      </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <div className="space-y-6">
-          {/* Results Summary */}
-          <div className="bg-white rounded-lg shadow p-6">
-            <h2 className="text-xl font-semibold mb-4">Analysis Summary</h2>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-              {Object.entries(analysisResults).map(([model, results]) => {
-                const totalIssues = Array.isArray(results)
-                  ? results.reduce((sum, file) => sum + (file.issues?.length || 0), 0)
-                  : 0;
-
-                return (
-                  <div key={model} className="bg-gray-50 rounded-lg p-4">
-                    <h3 className="font-medium text-gray-900">{model}</h3>
-                    <div className="text-2xl font-bold text-blue-600 mt-1">
-                      {totalIssues}
+        {/* Action Bar */}
+        <div className="modern-card">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-2xl font-bold text-[hsl(var(--text-primary))] mb-1">
+                {totalIssues} Issues Found
+              </h3>
+              <p className="text-[hsl(var(--text-secondary))]">
+                Review and fix aesthetic issues in your code
+              </p>
                     </div>
-                    <div className="text-sm text-gray-600">issues found</div>
+            <div className="flex gap-3">
+              <button onClick={downloadReport} className="btn-secondary-modern btn-modern">
+                <FileText className="w-4 h-4" />
+                Report
+              </button>
+              <button onClick={downloadFixedCode} className="btn-success-modern btn-modern">
+                <Download className="w-4 h-4" />
+                Download
+              </button>
                   </div>
-                );
-              })}
             </div>
           </div>
 
           {/* Issues List */}
-          <div className="bg-white rounded-lg shadow">
-            <div className="p-6 border-b">
-              <h2 className="text-xl font-semibold">Detected Issues</h2>
-              <p className="text-gray-600 mt-1">
-                Click "Smart Fix" to preview AI-powered remediation, or "View" for details
+        <div className="space-y-4">
+          {allIssues.length === 0 ? (
+            <div className="modern-card text-center py-16">
+              <div className="w-20 h-20 mx-auto mb-6 rounded-full bg-gradient-to-br from-[hsl(var(--success))] to-[hsl(var(--accent))] flex items-center justify-center">
+                <CheckCircle2 className="w-10 h-10 text-white" />
+              </div>
+              <h3 className="text-2xl font-bold text-[hsl(var(--text-primary))] mb-2">Perfect! No Issues Found</h3>
+              <p className="text-[hsl(var(--text-secondary))]">
+                Your code meets high aesthetic standards
               </p>
             </div>
-
-            <div className="divide-y">
-              {getAllIssues().map((issue, index) => (
-                <div key={index} className="p-6 hover:bg-gray-50">
-                  <div className="flex items-start justify-between">
+          ) : (
+            allIssues.map((issue, index) => {
+              const CategoryIcon = categoryIcons[issue.category] || AlertCircle;
+              return (
+                <div
+                  key={index}
+                  className="issue-card animate-slide-in-up"
+                  style={{ animationDelay: `${index * 0.05}s` }}
+                >
+                  <div className="flex items-start gap-4">
+                    <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[hsl(var(--primary))] to-[hsl(var(--secondary))] flex items-center justify-center flex-shrink-0">
+                      <CategoryIcon className="w-6 h-6 text-white" />
+                    </div>
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="font-medium text-gray-900">
-                          {issue.wcag_guideline}
-                        </h3>
-                        <span className={`px-2 py-1 rounded text-xs border ${getSeverityColor(issue.severity)}`}>
-                          Level {issue.severity}
+                      <div className="flex items-center gap-3 mb-2 flex-wrap">
+                        <h4 className="text-lg font-bold text-[hsl(var(--text-primary))]">
+                          {issue.principle_id || issue.wcag_guideline || 'Aesthetic Issue'}
+                        </h4>
+                        <span className={`badge-modern ${getSeverityColor(issue.severity)}`}>
+                          {issue.severity || 'medium'}
                         </span>
-                        <span className={`px-2 py-1 rounded text-xs ${getCategoryColor(issue.category)}`}>
+                        <span className={`badge-modern ${getCategoryColor(issue.category)}`}>
                           {issue.category}
                         </span>
-                        <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
-                          {issue.model}
+                      </div>
+                      <p className="text-[hsl(var(--text-secondary))] mb-3">
+                        {issue.description}
+                      </p>
+                      <div className="flex items-center gap-4 text-sm text-[hsl(var(--text-secondary))] mb-4">
+                        <span className="flex items-center gap-1">
+                          <FileCode className="w-4 h-4" />
+                          {issue.fileName}
                         </span>
-
-                        {/* Risk indicators */}
-                        {issue.infotainment_risk === 'critical' && (
-                          <span className="text-xs bg-red-100 text-red-800 px-2 py-1 rounded flex items-center gap-1">
-                            <AlertTriangle size={12} />
-                            Critical Risk
-                          </span>
-                        )}
-
-                        {issue.driver_safety_impact === 'critical' && (
-                          <span className="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded flex items-center gap-1">
-                            <Shield size={12} />
-                            Safety Critical
-                          </span>
-                        )}
-                      </div>
-
-                      <p className="text-gray-700 mb-2">{issue.description}</p>
-
-                      <div className="flex items-center gap-4 text-sm text-gray-500">
-                        <span>📁 {issue.fileName}</span>
                         {issue.line_numbers && (
-                          <span>📍 Lines {issue.line_numbers.join(', ')}</span>
-                        )}
-                        {issue.validation_score && (
-                          <span>🎯 Confidence: {(issue.validation_score * 100).toFixed(0)}%</span>
+                          <span className="flex items-center gap-1">
+                            <Code2 className="w-4 h-4" />
+                            Lines {issue.line_numbers.join(', ')}
+                          </span>
                         )}
                       </div>
-                    </div>
-
-                    <div className="flex gap-2 ml-4">
+                      <div className="flex gap-2">
                       <button
                         onClick={() => openIssueModal(issue, issue.model, issue.fileName)}
-                        className="flex items-center gap-1 px-3 py-2 text-blue-600 border border-blue-600 rounded hover:bg-blue-50 transition-colors"
+                          className="btn-secondary-modern btn-modern"
                       >
-                        <Eye size={16} />
-                        View
+                          <Eye className="w-4 h-4" />
+                          View Details
                       </button>
-
-                      {/* Enhanced Fix Button with Model Selection */}
-                      <div className="relative group">
-                        <button className="flex items-center gap-1 px-3 py-2 bg-gradient-to-r from-green-600 to-emerald-600 text-white rounded hover:from-green-700 hover:to-emerald-700 transition-all">
-                          <Zap size={16} />
-                          Smart Fix
-                        </button>
-
-                        {/* Dropdown for model selection */}
-                        <div className="absolute right-0 top-full mt-1 w-56 bg-white border border-gray-200 rounded-lg shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
-                          <div className="p-3">
-                            <div className="text-xs text-gray-500 mb-2 font-medium">Choose AI model for remediation:</div>
-                            {availableModels.map(model => (
                               <button
-                                key={model.id}
-                                onClick={() => handleRemediationPreview(issue.issue_id, model.id, issue)}
-                                className="block w-full text-left px-3 py-2 text-sm hover:bg-gray-100 rounded transition-colors"
+                          onClick={() => handleRemediationPreview(issue.issue_id, issue.model, issue)}
+                          className="btn-primary-modern btn-modern"
                               >
-                                <div className="font-medium">{model.name}</div>
-                                <div className="text-xs text-gray-500">{model.description}</div>
+                          <Zap className="w-4 h-4" />
+                          Smart Fix
                               </button>
-                            ))}
                           </div>
                         </div>
                       </div>
                     </div>
+              );
+            })
+          )}
                   </div>
-
-                  {/* Show applied remediation if available */}
-                  {appliedRemediations[issue.issue_id] && (
-                    <div className="mt-4 p-4 bg-green-50 border border-green-200 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-green-800 font-medium">
-                          <CheckCircle size={16} />
-                          <span>Fix Applied Successfully</span>
-                          <span className="text-xs bg-green-100 px-2 py-1 rounded">
-                            Quality: {(appliedRemediations[issue.issue_id].quality_score * 100).toFixed(0)}%
-                          </span>
-                        </div>
-                        <button
-                          onClick={() => handleRemediationRollback(issue.issue_id)}
-                          className="flex items-center gap-1 px-3 py-1 text-orange-600 hover:text-orange-700 text-sm transition-colors"
-                        >
-                          <Undo size={14} />
-                          Rollback
-                        </button>
-                      </div>
-                      <p className="text-green-700 text-sm mt-1">
-                        {appliedRemediations[issue.issue_id].changes_applied || 0} changes applied by {appliedRemediations[issue.issue_id].model}
-                      </p>
-                    </div>
-                  )}
-
-                  {/* Show preview if available but not applied */}
-                  {remediationPreviews[issue.issue_id] && !appliedRemediations[issue.issue_id] && (
-                    <div className="mt-4 p-4 bg-blue-50 border border-blue-200 rounded-lg">
-                      <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-2 text-blue-800 font-medium">
-                          <Eye size={16} />
-                          <span>Remediation Preview Available</span>
-                          <span className="text-xs bg-blue-100 px-2 py-1 rounded">
-                            Quality: {(remediationPreviews[issue.issue_id].quality_score * 100).toFixed(0)}%
-                          </span>
-                        </div>
-                        <button
-                          onClick={() => {
-                            setCurrentRemediation({
-                              issueId: issue.issue_id,
-                              model: remediationPreviews[issue.issue_id].model,
-                              issue: issue,
-                              preview: remediationPreviews[issue.issue_id]
-                            });
-                            setShowRemediationModal(true);
-                          }}
-                          className="flex items-center gap-1 px-3 py-1 text-blue-600 hover:text-blue-700 text-sm transition-colors"
-                        >
-                          <RefreshCw size={14} />
-                          Review Fix
-                        </button>
-                      </div>
-                      <p className="text-blue-700 text-sm mt-1">
-                        {remediationPreviews[issue.issue_id].changes?.length || 0} changes proposed by {remediationPreviews[issue.issue_id].model}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              ))}
-
-              {getAllIssues().length === 0 && (
-                <div className="p-8 text-center text-gray-500">
-                  <CheckCircle size={48} className="mx-auto text-green-500 mb-4" />
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No accessibility issues found!</h3>
-                  <p>Your infotainment interface meets WCAG 2.2 compliance standards. Great job! 🎉</p>
-                </div>
-              )}
-            </div>
-          </div>
-        </div>
       </div>
-    </div>
-  );
+    );
+  };
 
   return (
-    <div>
-      {/* Render different pages based on current state */}
-      {currentPage === 'configuration' ? <ConfigurationPage /> : <ResultsPage />}
+    <div className="min-h-screen relative">
+      <div className="animated-bg"></div>
+      
+      <Sidebar />
+      
+      <div className="main-content">
+        {currentPage === 'welcome' && <WelcomePage />}
+        {currentPage === 'upload' && <UploadPage />}
+        {currentPage === 'analyze' && <AnalyzePage />}
+        {currentPage === 'results' && <ResultsPage />}
+      </div>
 
-      {/* Issue Detail Modal */}
-      {renderIssueModal()}
+      {/* Issue Modal */}
+      {showIssueModal && selectedIssue && (
+        <div className="modal-overlay" onClick={() => setShowIssueModal(false)}>
+          <div className="modal-content w-full max-w-4xl" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6 border-b border-[hsl(var(--text-primary)/0.1)]">
+              <div className="flex items-center justify-between">
+                <h3 className="text-2xl font-bold text-[hsl(var(--text-primary))]">
+                  {selectedIssue.principle_id || 'Issue Details'}
+                </h3>
+                        <button
+                  onClick={() => setShowIssueModal(false)}
+                  className="w-8 h-8 rounded-lg hover:bg-[hsl(var(--bg-tertiary))] flex items-center justify-center"
+                        >
+                  <XCircle className="w-5 h-5 text-[hsl(var(--text-secondary))]" />
+                        </button>
+                      </div>
+            </div>
+            <div className="p-6 overflow-y-auto max-h-[70vh]">
+              <div className="space-y-4">
+                <div>
+                  <div className="text-sm text-[hsl(var(--text-secondary))] mb-1">Description</div>
+                  <div className="text-[hsl(var(--text-primary))]">{selectedIssue.description}</div>
+                </div>
+                {selectedIssue.code_snippet && (
+                  <div>
+                    <div className="text-sm text-[hsl(var(--text-secondary))] mb-1">Code Snippet</div>
+                    <pre className="p-4 glass rounded-xl text-sm text-[hsl(var(--text-primary))] overflow-x-auto bg-[hsl(var(--bg-tertiary))]">
+                      {selectedIssue.code_snippet}
+                    </pre>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+                    </div>
+                  )}
 
-      {/* Enhanced Remediation Modal */}
-      {renderRemediationModal()}
-
-      {/* Loading Overlay */}
-      {loading && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 flex items-center gap-3">
-            <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div>
-            <span>Processing...</span>
+      {/* Remediation Modal */}
+      {showRemediationModal && currentRemediation && (
+        <div className="modal-overlay" onClick={() => setShowRemediationModal(false)}>
+          <div className="modal-content w-full max-w-4xl" onClick={(e) => e.stopPropagation()}>
+            <div className="p-6 border-b border-[hsl(var(--text-primary)/0.1)]">
+                      <div className="flex items-center justify-between">
+                <h3 className="text-2xl font-bold text-[hsl(var(--text-primary))]">Remediation Preview</h3>
+                        <button
+                  onClick={() => setShowRemediationModal(false)}
+                  className="w-8 h-8 rounded-lg hover:bg-[hsl(var(--bg-tertiary))] flex items-center justify-center"
+                >
+                  <XCircle className="w-5 h-5 text-[hsl(var(--text-secondary))]" />
+                        </button>
+                      </div>
+                    </div>
+            <div className="p-6 overflow-y-auto max-h-[70vh]">
+              {currentRemediation.changes && (
+                <div className="space-y-4">
+                  {currentRemediation.changes.map((change, idx) => (
+                    <div key={idx} className="glass rounded-xl p-4">
+                      <div className="text-sm text-[hsl(var(--text-secondary))] mb-2">Line {change.line_number}</div>
+                      <div className="space-y-2">
+                        <div>
+                          <div className="text-xs text-red-600 mb-1">Original</div>
+                          <pre className="p-2 bg-[hsl(var(--bg-tertiary))] rounded text-xs text-[hsl(var(--text-primary))]">{change.original}</pre>
+                        </div>
+                        <ArrowRight className="w-4 h-4 text-[hsl(var(--primary))] mx-auto" />
+                        <div>
+                          <div className="text-xs text-green-600 mb-1">Fixed</div>
+                          <pre className="p-2 bg-[hsl(var(--bg-tertiary))] rounded text-xs text-[hsl(var(--text-primary))]">{change.fixed}</pre>
+                </div>
+            </div>
+          </div>
+                  ))}
+        </div>
+              )}
+      </div>
           </div>
         </div>
       )}

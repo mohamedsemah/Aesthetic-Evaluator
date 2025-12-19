@@ -12,9 +12,9 @@ ALLOWED_MODELS = ["gpt-4o", "claude-opus-4", "deepseek-v3", "llama-maverick"]
 
 
 class AnalysisRequest(BaseModel):
-    """Validated analysis request"""
+    """Validated aesthetics analysis request"""
     session_id: str = Field(..., description="Session ID (UUID format)")
-    models: List[str] = Field(..., min_items=1, max_items=10, description="List of LLM models to use")
+    models: List[str] = Field(..., min_items=1, max_items=10, description="List of LLM models to use for aesthetics analysis")
     
     @validator("session_id")
     def validate_session_id(cls, v):
@@ -42,9 +42,9 @@ class AnalysisRequest(BaseModel):
 
 
 class RemediationRequest(BaseModel):
-    """Validated remediation request"""
+    """Validated aesthetic remediation request"""
     session_id: str = Field(..., description="Session ID")
-    issue_id: str = Field(..., min_length=1, max_length=100, description="Issue ID")
+    issue_id: str = Field(..., min_length=1, max_length=100, description="Aesthetic issue ID")
     model: str = Field(..., description="LLM model to use")
     file_path: str = Field(..., min_length=1, max_length=500, description="File path")
     
@@ -71,9 +71,9 @@ class RemediationRequest(BaseModel):
 
 
 class PreviewRemediationRequest(BaseModel):
-    """Validated preview remediation request"""
+    """Validated preview aesthetic remediation request"""
     session_id: str = Field(..., description="Session ID")
-    issue_id: str = Field(..., min_length=1, max_length=100, description="Issue ID")
+    issue_id: str = Field(..., min_length=1, max_length=100, description="Aesthetic issue ID")
     model: str = Field(..., description="LLM model to use")
     
     @validator("session_id")
@@ -98,9 +98,9 @@ class PreviewRemediationRequest(BaseModel):
 
 
 class ApplyRemediationRequest(BaseModel):
-    """Validated apply remediation request"""
+    """Validated apply aesthetic remediation request"""
     session_id: str = Field(..., description="Session ID")
-    issue_id: str = Field(..., min_length=1, max_length=100, description="Issue ID")
+    issue_id: str = Field(..., min_length=1, max_length=100, description="Aesthetic issue ID")
     model: str = Field(..., description="LLM model to use")
     force_apply: bool = Field(default=False, description="Force apply even if quality score is low")
     
@@ -128,7 +128,7 @@ class ApplyRemediationRequest(BaseModel):
 class RollbackRequest(BaseModel):
     """Validated rollback request"""
     session_id: str = Field(..., description="Session ID")
-    issue_id: str = Field(..., min_length=1, max_length=100, description="Issue ID")
+    issue_id: str = Field(..., min_length=1, max_length=100, description="Aesthetic issue ID")
     
     @validator("session_id")
     def validate_session_id(cls, v):

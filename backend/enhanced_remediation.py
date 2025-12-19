@@ -9,7 +9,7 @@ import difflib
 import logging
 
 from llm_clients import LLMClient
-from wcag_analyzer import WCAGAnalyzer
+from aesthetics_analyzer import AestheticsAnalyzer
 from code_processor import CodeProcessor
 
 logger = logging.getLogger(__name__)
@@ -18,29 +18,28 @@ logger = logging.getLogger(__name__)
 class EnhancedRemediationService:
     def __init__(self):
         self.llm_client = LLMClient()
-        self.wcag_analyzer = WCAGAnalyzer()
+        self.aesthetics_analyzer = AestheticsAnalyzer()
         self.code_processor = CodeProcessor()
 
         # Enhanced remediation prompt template
         self.remediation_prompt = """
-You are an expert accessibility developer specializing in WCAG 2.2 compliance fixes for infotainment systems.
+You are an expert design developer specializing in aesthetic improvements and visual design fixes for web and mobile interfaces.
 
-**TASK**: Fix the specific accessibility violation below while preserving all existing functionality.
+**TASK**: Fix the specific aesthetic issue below while preserving all existing functionality and improving visual design quality.
 
 **FILE INFORMATION**:
 - File: {filename}
 - Framework: {framework}
 - File Type: {file_type}
 
-**ACCESSIBILITY ISSUE**:
+**AESTHETIC ISSUE**:
 - Issue ID: {issue_id}
-- WCAG Guideline: {wcag_guideline}
+- Aesthetic Principle: {principle_id}
 - Severity Level: {severity}
 - Category: {category}
 - Description: {description}
 - Impact: {impact}
-- Infotainment Risk: {infotainment_risk}
-- Driver Safety Impact: {driver_safety_impact}
+- Design Impact: {design_impact}
 
 **PROBLEMATIC CODE** (Lines {line_numbers}):
 ```{file_type}
@@ -56,12 +55,12 @@ You are an expert accessibility developer specializing in WCAG 2.2 compliance fi
 {recommendation}
 
 **REQUIREMENTS**:
-1. Fix ONLY the specific accessibility violation mentioned above
+1. Fix ONLY the specific aesthetic issue mentioned above
 2. Preserve all existing functionality and styling
-3. Follow WCAG 2.2 {severity} level compliance requirements
-4. Consider infotainment-specific constraints (touch targets ≥44px, driver safety)
-5. Add comments explaining the accessibility fix
-6. Ensure the fix works with assistive technologies
+3. Follow modern design principles and best practices
+4. Consider visual design constraints (readability, consistency, modern patterns)
+5. Add comments explaining the aesthetic improvement
+6. Ensure the fix improves visual appeal and user experience
 
 **CRITICAL INSTRUCTIONS**:
 - Return ONLY valid JSON
@@ -76,20 +75,20 @@ You are an expert accessibility developer specializing in WCAG 2.2 compliance fi
     {{
       "line_number": {line_numbers},
       "original": "exact original problematic code",
-      "fixed": "exact fixed code with accessibility improvement",
+      "fixed": "exact fixed code with aesthetic improvement",
       "explanation": "detailed explanation of what was changed and why",
-      "wcag_principle": "which WCAG principle this addresses",
-      "accessibility_improvement": "specific accessibility benefit this provides"
+      "aesthetic_principle": "which aesthetic principle this addresses",
+      "design_improvement": "specific design benefit this provides"
     }}
   ],
   "validation": {{
-    "wcag_compliance": "explanation of how this fix ensures WCAG 2.2 compliance",
-    "testing_instructions": "how to test this fix with assistive technologies",
-    "infotainment_considerations": "specific considerations for automotive use",
-    "potential_side_effects": "any potential impacts to consider"
+    "design_improvement": "explanation of how this fix improves visual design quality",
+    "testing_instructions": "how to test this fix visually",
+    "user_experience": "how this improves user experience and visual appeal",
+    "potential_side_effects": "any potential visual impacts to consider"
   }},
   "fix_confidence": 0.95,
-  "estimated_impact": "description of user experience improvement"
+  "estimated_impact": "description of visual design and user experience improvement"
 }}
 
 **CRITICAL**: Return ONLY valid JSON. Do NOT include full file content. Focus on the specific fix only.
@@ -145,7 +144,7 @@ You are an expert accessibility developer specializing in WCAG 2.2 compliance fi
                 }
 
             logger.info(
-                f"Issue details found: {issue_details.get('wcag_guideline', 'No guideline')} in file {issue_details.get('file_name', 'No file')}")
+                f"Issue details found: {issue_details.get('principle_id', 'No principle')} in file {issue_details.get('file_name', 'No file')}")
 
             # Step 2: Read the current file content
             logger.info("Step 2: Reading file content...")
@@ -338,9 +337,9 @@ You are an expert accessibility developer specializing in WCAG 2.2 compliance fi
             filename = file_path.name
             file_type = self._get_file_type(filename)
 
-            # Safe access to infotainment context
-            infotainment_context = issue_details.get('infotainment_context', {})
-            patterns_found = infotainment_context.get('patterns_found', [])
+            # Safe access to design context
+            design_context = issue_details.get('design_context', {})
+            patterns_found = design_context.get('patterns_found', [])
             framework = patterns_found[0] if patterns_found else 'unknown'
 
             # Create numbered code
@@ -366,13 +365,12 @@ You are an expert accessibility developer specializing in WCAG 2.2 compliance fi
 
             # Safe access to all issue details with defaults
             issue_id = issue_details.get('issue_id', 'Unknown')
-            wcag_guideline = issue_details.get('wcag_guideline', 'Unknown guideline')
-            severity = issue_details.get('severity', 'A')
+            principle_id = issue_details.get('principle_id', 'Unknown principle')
+            severity = issue_details.get('severity', 'medium')
             category = issue_details.get('category', 'unknown')
             description = issue_details.get('description', 'No description available')
             impact = issue_details.get('impact', 'Impact not specified')
-            infotainment_risk = issue_details.get('infotainment_risk', 'medium')
-            driver_safety_impact = issue_details.get('driver_safety_impact', 'minor')
+            design_impact = issue_details.get('design_impact', 'medium')
             code_snippet = issue_details.get('code_snippet', 'Code snippet not available')
             recommendation = issue_details.get('recommendation', 'No specific recommendation provided')
 
@@ -383,13 +381,12 @@ You are an expert accessibility developer specializing in WCAG 2.2 compliance fi
                 framework=framework,
                 file_type=file_type,
                 issue_id=issue_id,
-                wcag_guideline=wcag_guideline,
+                principle_id=principle_id,
                 severity=severity,
                 category=category,
                 description=description,
                 impact=impact,
-                infotainment_risk=infotainment_risk,
-                driver_safety_impact=driver_safety_impact,
+                design_impact=design_impact,
                 line_numbers=line_numbers_str,
                 code_snippet=code_snippet,
                 code_context=code_context,
@@ -458,12 +455,12 @@ You are an expert accessibility developer specializing in WCAG 2.2 compliance fi
             file_path: Path
     ) -> Dict[str, Any]:
         """
-        Validate that the remediation actually fixes the accessibility issue
+        Validate that the remediation actually fixes the aesthetic issue
         """
         validation_result = {
             "validation_passed": False,
             "validation_details": {},
-            "accessibility_recheck": {},
+            "design_recheck": {},
             "quality_score": 0.0
         }
 
@@ -480,17 +477,17 @@ You are an expert accessibility developer specializing in WCAG 2.2 compliance fi
             )
             validation_result["validation_details"]["issue_addressed"] = issue_addressed
 
-            # 3. Re-run accessibility analysis on fixed code (mini-analysis)
-            accessibility_recheck = await self._recheck_accessibility(
+            # 3. Re-run aesthetics analysis on fixed code (mini-analysis)
+            design_recheck = await self._recheck_aesthetics(
                 fixed_content, issue_details, file_path
             )
-            validation_result["accessibility_recheck"] = accessibility_recheck
+            validation_result["design_recheck"] = design_recheck
 
             # 4. Calculate overall quality score
             validation_result["quality_score"] = self._calculate_remediation_quality(
                 syntax_validation,
                 issue_addressed,
-                accessibility_recheck
+                design_recheck
             )
 
             # 5. Determine if validation passed
@@ -513,39 +510,64 @@ You are an expert accessibility developer specializing in WCAG 2.2 compliance fi
             issue_details: Dict[str, Any]
     ) -> Dict[str, Any]:
         """
-        Check if the specific accessibility issue has been addressed
+        Check if the specific aesthetic issue has been addressed
         """
-        wcag_guideline = issue_details.get('wcag_guideline', '')
+        principle_id = issue_details.get('principle_id', '')
+        category = issue_details.get('category', '')
 
-        # Define patterns that indicate issue resolution for different WCAG guidelines
+        # Define patterns that indicate issue resolution for different aesthetic principles
         resolution_patterns = {
-            '1.1.1': {
-                'patterns': [r'alt\s*=\s*["\'][^"\']+["\']', r'aria-label\s*=', r'aria-labelledby\s*='],
-                'description': 'Alt text or ARIA labels added'
+            'COLOR_001': {
+                'patterns': [r'#[0-9a-fA-F]{3,6}', r'rgb\s*\(', r'rgba\s*\('],
+                'description': 'Color values improved'
             },
-            '2.1.1': {
-                'patterns': [r'onkeydown\s*=', r'onkeypress\s*=', r'tabindex\s*='],
-                'description': 'Keyboard event handlers added'
+            'COLOR_002': {
+                'patterns': [r'var\(--[a-z-]+-color', r'--[a-z-]+-color'],
+                'description': 'CSS variables for colors added'
             },
-            '2.4.7': {
-                'patterns': [r':focus\s*{', r'focus-visible', r'outline\s*:'],
-                'description': 'Focus styles added'
+            'SPACING_001': {
+                'patterns': [r'\d+px'],
+                'description': 'Spacing values adjusted to 8px grid'
             },
-            '3.3.2': {
-                'patterns': [r'<label\b', r'aria-label\s*=', r'aria-labelledby\s*='],
-                'description': 'Form labels added'
+            'SPACING_002': {
+                'patterns': [r'margin\s*:', r'padding\s*:', r'gap\s*:'],
+                'description': 'Consistent spacing applied'
             },
-            '4.1.2': {
-                'patterns': [r'role\s*=', r'aria-\w+\s*='],
-                'description': 'ARIA attributes added'
+            'TYPOGRAPHY_001': {
+                'patterns': [r'font-size\s*:', r'font-weight\s*:'],
+                'description': 'Typography hierarchy improved'
+            },
+            'TYPOGRAPHY_002': {
+                'patterns': [r'font-size\s*:\s*1[2-9]px|font-size\s*:\s*[2-9]\d+px'],
+                'description': 'Readable font sizes applied'
+            },
+            'HIERARCHY_001': {
+                'patterns': [r'font-size\s*:', r'font-weight\s*:'],
+                'description': 'Visual hierarchy improved'
+            },
+            'MODERN_001': {
+                'patterns': [r'box-shadow', r'border-radius'],
+                'description': 'Modern design patterns added'
             }
         }
 
-        guideline_id = wcag_guideline.split()[0] if wcag_guideline else ''
-
-        if guideline_id in resolution_patterns:
-            patterns = resolution_patterns[guideline_id]['patterns']
-            description = resolution_patterns[guideline_id]['description']
+        if principle_id in resolution_patterns:
+            patterns = resolution_patterns[principle_id]['patterns']
+            description = resolution_patterns[principle_id]['description']
+        elif category in ['color', 'spacing', 'typography', 'hierarchy', 'modern_patterns']:
+            # Category-based patterns
+            category_patterns = {
+                'color': [r'var\(--[a-z-]+-color', r'#[0-9a-fA-F]{3,6}'],
+                'spacing': [r'margin|padding|gap'],
+                'typography': [r'font-size|font-weight|line-height'],
+                'hierarchy': [r'font-size|font-weight'],
+                'modern_patterns': [r'box-shadow|border-radius'],
+            }
+            patterns = category_patterns.get(category, [])
+            description = f'{category.title()} improvements applied'
+        else:
+            patterns = []
+            description = 'General improvements detected'
 
             # Check if any of the resolution patterns are present in fixed code but not original
             improvements_found = []
@@ -564,8 +586,8 @@ You are an expert accessibility developer specializing in WCAG 2.2 compliance fi
 
         # Fallback: check for general improvements
         general_improvements = [
-            "// FIXED", "// ACCESSIBILITY FIX", "aria-", "alt=", "role=",
-            "tabindex=", "focus", "label"
+            "// FIXED", "// AESTHETIC FIX", "border-radius", "box-shadow",
+            "var(--", "font-size", "margin", "padding", "color:"
         ]
 
         found_improvements = [
@@ -576,18 +598,18 @@ You are an expert accessibility developer specializing in WCAG 2.2 compliance fi
         return {
             "likely_resolved": len(found_improvements) > 0,
             "improvements_found": found_improvements,
-            "resolution_description": "General accessibility improvements detected",
+            "resolution_description": "General aesthetic improvements detected",
             "confidence": 0.5 if found_improvements else 0.1
         }
 
-    async def _recheck_accessibility(
+    async def _recheck_aesthetics(
             self,
             fixed_content: str,
             issue_details: Dict[str, Any],
             file_path: Path
     ) -> Dict[str, Any]:
         """
-        Re-run accessibility analysis on fixed code to verify issue resolution
+        Re-run aesthetics analysis on fixed code to verify issue resolution
         """
         try:
             # Create a mini file info for analysis
@@ -599,7 +621,7 @@ You are an expert accessibility developer specializing in WCAG 2.2 compliance fi
             }
 
             # Run static analysis on fixed code
-            static_issues = self.wcag_analyzer._perform_static_analysis(fixed_content, file_info)
+            static_issues = self.aesthetics_analyzer._perform_static_analysis(fixed_content, file_info)
 
             # Check if the specific issue still exists
             original_issue_id = issue_details.get('issue_id', '')
@@ -617,7 +639,7 @@ You are an expert accessibility developer specializing in WCAG 2.2 compliance fi
             }
 
         except Exception as e:
-            logger.error(f"Accessibility recheck failed: {str(e)}")
+            logger.error(f"Aesthetics recheck failed: {str(e)}")
             return {
                 "error": str(e),
                 "improvement_score": 0.5  # Neutral score if recheck fails
@@ -627,11 +649,11 @@ You are an expert accessibility developer specializing in WCAG 2.2 compliance fi
         """
         Check if a new issue is similar to the original issue being fixed
         """
-        # Compare WCAG guidelines
-        new_guideline = new_issue.get('wcag_guideline', '').split()[0]
-        original_guideline = original_issue.get('wcag_guideline', '').split()[0]
+        # Compare aesthetic principles
+        new_principle = new_issue.get('principle_id', '')
+        original_principle = original_issue.get('principle_id', '')
 
-        if new_guideline == original_guideline:
+        if new_principle == original_principle:
             return True
 
         # Compare line numbers (with some tolerance)
@@ -647,7 +669,7 @@ You are an expert accessibility developer specializing in WCAG 2.2 compliance fi
             self,
             syntax_validation: Dict,
             issue_addressed: Dict,
-            accessibility_recheck: Dict
+            design_recheck: Dict
     ) -> float:
         """
         Calculate overall quality score for the remediation
@@ -662,8 +684,8 @@ You are an expert accessibility developer specializing in WCAG 2.2 compliance fi
         resolution_confidence = issue_addressed.get("confidence", 0)
         score += 0.4 * resolution_confidence
 
-        # Accessibility improvement (30%)
-        improvement_score = accessibility_recheck.get("improvement_score", 0)
+        # Design improvement (30%)
+        improvement_score = design_recheck.get("improvement_score", 0)
         score += 0.3 * improvement_score
 
         return min(1.0, score)

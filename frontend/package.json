@@ -1,7 +1,7 @@
 {
-  "name": "infotainment-accessibility-analyzer",
+  "name": "Aesthetic-analyzer",
   "version": "1.0.0",
-  "description": "Frontend for infotainment accessibility analysis tool",
+  "description": "Frontend for aesthetics analysis tool",
   "homepage": ".",
   "private": true,
   "dependencies": {

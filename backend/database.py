@@ -1,5 +1,5 @@
 """
-Database models and session management
+Database models and session management for aesthetics analysis
 """
 from sqlalchemy import create_engine, Column, String, DateTime, JSON, Integer, Text
 from sqlalchemy.ext.declarative import declarative_base
@@ -24,7 +24,7 @@ Base = declarative_base()
 
 
 class AnalysisSession(Base):
-    """Database model for analysis sessions"""
+    """Database model for aesthetics analysis sessions"""
     __tablename__ = "analysis_sessions"
     
     id = Column(String, primary_key=True, index=True)

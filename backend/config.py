@@ -10,7 +10,7 @@ class Settings(BaseSettings):
     """Application settings with validation"""
     
     # Application
-    APP_NAME: str = "Infotainment Accessibility Analyzer"
+    APP_NAME: str = "Aesthetics Analyzer"
     APP_VERSION: str = "1.0.0"
     DEBUG: bool = False
     

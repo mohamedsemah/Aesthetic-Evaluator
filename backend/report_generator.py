@@ -124,7 +124,7 @@ class ReportGenerator:
 
         # Main title
         story.append(Paragraph(
-            "Infotainment Accessibility Analysis Report",
+            "Aesthetics Analysis Report",
             self.styles['CustomTitle']
         ))
         story.append(Spacer(1, 0.5 * inch))
@@ -188,11 +188,11 @@ class ReportGenerator:
                         all_issues.extend(file_result['issues'])
 
         # Severity breakdown
-        severity_counts = {'A': 0, 'AA': 0, 'AAA': 0}
-        category_counts = {'perceivable': 0, 'operable': 0, 'understandable': 0, 'robust': 0}
+        severity_counts = {'critical': 0, 'high': 0, 'medium': 0, 'low': 0}
+        category_counts = {'color': 0, 'spacing': 0, 'typography': 0, 'hierarchy': 0, 'consistency': 0, 'modern_patterns': 0, 'balance': 0, 'clutter': 0}
 
         for issue in all_issues:
-            severity = issue.get('severity', 'A')
+            severity = issue.get('severity', 'medium')
             category = issue.get('category', 'unknown')
 
             if severity in severity_counts:
@@ -202,22 +202,22 @@ class ReportGenerator:
 
         # Summary text
         total_issues = len(all_issues)
-        critical_issues = severity_counts['A'] + severity_counts['AA']
+        critical_issues = severity_counts['critical'] + severity_counts['high']
 
         summary_text = f"""
-        This report presents the results of an automated accessibility analysis performed on 
-        {len(session_data.get('files', []))} infotainment system files using multiple Large Language Models (LLMs). 
-
+        This report presents the results of an automated aesthetics analysis performed on 
+        {len(session_data.get('files', []))} web and mobile interface files using multiple Large Language Models (LLMs). 
+        
         <b>Key Findings:</b><br/>
-        • Total accessibility issues identified: {total_issues}<br/>
-        • Critical issues (Level A & AA): {critical_issues}<br/>
+        • Total aesthetic issues identified: {total_issues}<br/>
+        • Critical issues (Critical & High): {critical_issues}<br/>
         • Most common category: {max(category_counts, key=category_counts.get) if category_counts else 'N/A'}<br/>
         • LLM models compared: {', '.join(analysis_results.keys())}<br/>
-
-        <b>Compliance Status:</b><br/>
-        The analysis reveals varying degrees of WCAG 2.2 compliance across the analyzed files. 
-        Immediate attention is recommended for Level A and AA violations, which represent 
-        fundamental accessibility barriers for users with disabilities.
+        
+        <b>Design Quality Status:</b><br/>
+        The analysis reveals varying degrees of design quality across the analyzed files. 
+        Immediate attention is recommended for critical and high severity issues, which represent 
+        significant visual design problems affecting user experience and aesthetic appeal.
         """
 
         story.append(Paragraph(summary_text, self.styles['Normal']))
@@ -238,7 +238,7 @@ class ReportGenerator:
         """Create LLM analysis comparison section"""
         story = []
 
-        story.append(Paragraph("LLM Model Analysis Comparison", self.styles['SectionHeader']))
+        story.append(Paragraph("LLM Model Aesthetics Analysis Comparison", self.styles['SectionHeader']))
 
         analysis_results = session_data.get('analysis_results', {})
 
@@ -290,7 +290,7 @@ class ReportGenerator:
             if isinstance(model_results, list) and model_results:
                 model_text = f"""
                 <b>Files Processed:</b> {len(model_results)}<br/>
-                <b>Analysis Method:</b> WCAG 2.2 compliance detection<br/>
+                <b>Analysis Method:</b> Aesthetics and design quality detection<br/>
                 <b>Key Strengths:</b> {self._get_model_strengths(model, model_results)}<br/>
                 <b>Areas for Improvement:</b> {self._get_model_weaknesses(model, model_results)}
                 """
@@ -306,34 +306,34 @@ class ReportGenerator:
         """Create detailed findings section"""
         story = []
 
-        story.append(Paragraph("Detailed Accessibility Findings", self.styles['SectionHeader']))
+        story.append(Paragraph("Detailed Aesthetic Findings", self.styles['SectionHeader']))
 
         analysis_results = session_data.get('analysis_results', {})
 
-        # Group issues by WCAG guideline
-        guideline_issues = {}
+        # Group issues by aesthetic principle
+        principle_issues = {}
 
         for model, model_results in analysis_results.items():
             if isinstance(model_results, list):
                 for file_result in model_results:
                     for issue in file_result.get('issues', []):
-                        guideline = issue.get('wcag_guideline', 'Unknown')
-                        if guideline not in guideline_issues:
-                            guideline_issues[guideline] = []
+                        principle = issue.get('principle_id', issue.get('wcag_guideline', 'Unknown'))
+                        if principle not in principle_issues:
+                            principle_issues[principle] = []
 
                         issue_copy = issue.copy()
                         issue_copy['model'] = model
                         issue_copy['file'] = file_result.get('file_info', {}).get('name', 'Unknown')
-                        guideline_issues[guideline].append(issue_copy)
+                        principle_issues[principle].append(issue_copy)
 
-        # Present issues by guideline
-        for guideline, issues in sorted(guideline_issues.items()):
-            story.append(Paragraph(f"{guideline}", self.styles['IssueTitle']))
+        # Present issues by principle
+        for principle, issues in sorted(principle_issues.items()):
+            story.append(Paragraph(f"{principle}", self.styles['IssueTitle']))
 
-            # Guideline summary
+            # Principle summary
             severity_dist = {}
             for issue in issues:
-                sev = issue.get('severity', 'A')
+                sev = issue.get('severity', 'medium')
                 severity_dist[sev] = severity_dist.get(sev, 0) + 1
 
             summary_text = f"""
@@ -461,13 +461,13 @@ class ReportGenerator:
 
         # General recommendations
         general_recs = [
-            "Implement automated accessibility testing in your CI/CD pipeline",
-            "Train development team on WCAG 2.2 guidelines and best practices",
-            "Establish accessibility code review processes",
-            "Consider using accessibility testing tools like axe-core or WAVE",
-            "Implement user testing with assistive technologies",
-            "Create accessibility guidelines specific to infotainment systems",
-            "Regular audit schedule for accessibility compliance"
+            "Implement automated design quality testing in your CI/CD pipeline",
+            "Train development team on modern design principles and best practices",
+            "Establish design code review processes",
+            "Consider using design system tools and style guides",
+            "Implement user testing for visual design and aesthetics",
+            "Create design guidelines and component libraries",
+            "Regular audit schedule for design quality and consistency"
         ]
 
         story.append(Paragraph("General Recommendations", self.styles['Heading3']))
@@ -479,11 +479,11 @@ class ReportGenerator:
         # Implementation timeline
         timeline_text = """
         <b>Suggested Implementation Timeline:</b><br/>
-        • <b>Week 1-2:</b> Fix all Level A violations<br/>
-        • <b>Week 3-4:</b> Address Level AA violations<br/>
-        • <b>Month 2:</b> Implement automated testing<br/>
-        • <b>Month 3:</b> Team training and process improvement<br/>
-        • <b>Ongoing:</b> Regular audits and continuous improvement
+        • <b>Week 1-2:</b> Fix all critical and high severity issues<br/>
+        • <b>Week 3-4:</b> Address medium severity issues<br/>
+        • <b>Month 2:</b> Implement automated design quality testing<br/>
+        • <b>Month 3:</b> Team training and design system implementation<br/>
+        • <b>Ongoing:</b> Regular audits and continuous design improvement
         """
         story.append(Paragraph(timeline_text, self.styles['Normal']))
 
@@ -522,20 +522,24 @@ class ReportGenerator:
         story.append(file_table)
         story.append(Spacer(1, 0.3 * inch))
 
-        # Appendix B: WCAG 2.2 Guidelines Reference
-        story.append(Paragraph("Appendix B: WCAG 2.2 Guidelines Reference", self.styles['Heading3']))
+        # Appendix B: Aesthetic Principles Reference
+        story.append(Paragraph("Appendix B: Aesthetic Principles Reference", self.styles['Heading3']))
 
-        wcag_summary = """
-        This analysis is based on Web Content Accessibility Guidelines (WCAG) 2.2, 
-        which provides recommendations for making web content more accessible. 
-        The guidelines are organized under 4 principles:
+        aesthetic_summary = """
+        This analysis is based on modern design principles and aesthetic best practices, 
+        which provide recommendations for creating visually appealing and well-designed interfaces. 
+        The principles are organized under 8 categories:
 
-        • <b>Perceivable:</b> Information must be presentable in ways users can perceive
-        • <b>Operable:</b> Interface components must be operable
-        • <b>Understandable:</b> Information and UI operation must be understandable
-        • <b>Robust:</b> Content must be robust enough for interpretation by assistive technologies
+        • <b>Color:</b> Color harmony, palette consistency, and contrast for readability
+        • <b>Spacing:</b> 8px grid system, consistent margins/padding, whitespace balance
+        • <b>Typography:</b> Font hierarchy, readable sizes, line height, font pairing
+        • <b>Hierarchy:</b> Size relationships, visual emphasis, information architecture
+        • <b>Consistency:</b> Component patterns, spacing consistency, color usage
+        • <b>Modern Patterns:</b> Card designs, shadows, borders, rounded corners
+        • <b>Balance:</b> Visual weight distribution, layout balance
+        • <b>Clutter:</b> Visual clutter detection, unnecessary elements
 
-        Each guideline has three levels of conformance: A (minimum), AA (standard), AAA (enhanced).
+        Each issue has a severity level: critical, high, medium, or low.
         """
 
         story.append(Paragraph(wcag_summary, self.styles['Normal']))
@@ -547,21 +551,21 @@ class ReportGenerator:
         methodology_text = """
         <b>Analysis Approach:</b><br/>
         1. File preprocessing and format detection<br/>
-        2. Static code analysis for common accessibility patterns<br/>
+        2. Static code analysis for common aesthetic patterns<br/>
         3. LLM-based semantic analysis using specialized prompts<br/>
         4. Cross-model result comparison and validation<br/>
         5. Issue prioritization and remediation suggestions<br/>
 
         <b>LLM Models Used:</b><br/>
-        • GPT-4o: Advanced reasoning and code understanding<br/>
+        • GPT-4o: Advanced reasoning and design understanding<br/>
         • Claude Opus 4: Strong analytical capabilities<br/>
         • DeepSeek-V3: Code-focused analysis<br/>
         • LLaMA Maverick: Alternative perspective validation<br/>
 
         <b>Limitations:</b><br/>
-        • Automated analysis may miss context-dependent issues<br/>
-        • Some accessibility aspects require manual testing<br/>
-        • LLM outputs should be validated by accessibility experts
+        • Automated analysis may miss context-dependent design issues<br/>
+        • Some aesthetic aspects require manual visual review<br/>
+        • LLM outputs should be validated by design experts
         """
 
         story.append(Paragraph(methodology_text, self.styles['Normal']))
@@ -580,11 +584,13 @@ class ReportGenerator:
         pie.height = 100
 
         pie.data = list(severity_counts.values())
-        pie.labels = [f"Level {k}" for k in severity_counts.keys()]
+        pie.labels = [k.title() for k in severity_counts.keys()]
         pie.slices.strokeWidth = 0.5
-        pie.slices[0].fillColor = colors.red
-        pie.slices[1].fillColor = colors.orange
-        pie.slices[2].fillColor = colors.yellow
+        # Color mapping for aesthetic severities
+        color_map = {'critical': colors.red, 'high': colors.orange, 'medium': colors.yellow, 'low': colors.lightblue}
+        for i, key in enumerate(severity_counts.keys()):
+            if i < len(pie.slices):
+                pie.slices[i].fillColor = color_map.get(key, colors.grey)
 
         drawing.add(pie)
 
@@ -615,7 +621,7 @@ class ReportGenerator:
 
         # Add title
         from reportlab.graphics.shapes import String
-        title = String(200, 180, "Issues by WCAG Category", textAnchor='middle')
+        title = String(200, 180, "Issues by Aesthetic Category", textAnchor='middle')
         title.fontSize = 12
         title.fontName = 'Helvetica-Bold'
         drawing.add(title)
@@ -651,20 +657,20 @@ class ReportGenerator:
         if avg_issues > 10:
             return "May be overly sensitive, potential false positives"
         elif avg_issues < 2:
-            return "May miss subtle accessibility issues"
+            return "May miss subtle aesthetic issues"
         else:
-            return "Balanced detection approach"
+            return "Balanced aesthetics detection approach"
 
     def _generate_priority_recommendations(self, issues: List[Dict[str, Any]]) -> List[str]:
         """Generate priority recommendations based on issues"""
         recommendations = []
 
         # Count severity and categories
-        severity_counts = {'A': 0, 'AA': 0, 'AAA': 0}
-        category_counts = {'perceivable': 0, 'operable': 0, 'understandable': 0, 'robust': 0}
+        severity_counts = {'critical': 0, 'high': 0, 'medium': 0, 'low': 0}
+        category_counts = {'color': 0, 'spacing': 0, 'typography': 0, 'hierarchy': 0, 'consistency': 0, 'modern_patterns': 0, 'balance': 0, 'clutter': 0}
 
         for issue in issues:
-            severity = issue.get('severity', 'A')
+            severity = issue.get('severity', 'medium')
             category = issue.get('category', 'unknown')
 
             if severity in severity_counts:
@@ -673,32 +679,36 @@ class ReportGenerator:
                 category_counts[category] += 1
 
         # Generate recommendations based on most common issues
-        if severity_counts['A'] > 0:
+        if severity_counts['critical'] > 0:
             recommendations.append(
-                f"Immediately address {severity_counts['A']} Level A violations - these are critical accessibility barriers")
+                f"Immediately address {severity_counts['critical']} critical issues - these significantly impact design quality")
 
-        if severity_counts['AA'] > 0:
+        if severity_counts['high'] > 0:
             recommendations.append(
-                f"Plan remediation for {severity_counts['AA']} Level AA violations to meet standard compliance")
+                f"Plan remediation for {severity_counts['high']} high severity issues to improve visual design")
 
         # Category-specific recommendations
         max_category = max(category_counts, key=category_counts.get) if any(category_counts.values()) else None
 
-        if max_category == 'perceivable':
-            recommendations.append("Focus on improving visual and sensory accessibility (alt text, contrast, etc.)")
-        elif max_category == 'operable':
-            recommendations.append("Enhance keyboard navigation and interactive element accessibility")
-        elif max_category == 'understandable':
-            recommendations.append("Improve content clarity and user interface predictability")
-        elif max_category == 'robust':
-            recommendations.append("Strengthen code structure and assistive technology compatibility")
+        if max_category == 'color':
+            recommendations.append("Focus on improving color harmony and palette consistency")
+        elif max_category == 'spacing':
+            recommendations.append("Enhance spacing system and layout consistency")
+        elif max_category == 'typography':
+            recommendations.append("Improve typography hierarchy and readability")
+        elif max_category == 'hierarchy':
+            recommendations.append("Strengthen visual hierarchy and information architecture")
+        elif max_category == 'consistency':
+            recommendations.append("Establish consistent design patterns and component usage")
+        elif max_category == 'modern_patterns':
+            recommendations.append("Adopt modern design patterns and visual effects")
 
         # If no specific recommendations, add general ones
         if not recommendations:
             recommendations.extend([
-                "Implement comprehensive accessibility testing",
-                "Review and update development processes",
-                "Consider accessibility training for development team"
+                "Implement comprehensive design quality testing",
+                "Review and update design processes",
+                "Consider design training for development team"
             ])
 
         return recommendations[:5]  # Return top 5 recommendations
@@ -713,8 +723,8 @@ class ReportGenerator:
             'files_analyzed': len(session_data.get('files', [])),
             'models_used': list(analysis_results.keys()),
             'total_issues': 0,
-            'issues_by_severity': {'A': 0, 'AA': 0, 'AAA': 0},
-            'issues_by_category': {'perceivable': 0, 'operable': 0, 'understandable': 0, 'robust': 0},
+            'issues_by_severity': {'critical': 0, 'high': 0, 'medium': 0, 'low': 0},
+            'issues_by_category': {'color': 0, 'spacing': 0, 'typography': 0, 'hierarchy': 0, 'consistency': 0, 'modern_patterns': 0, 'balance': 0, 'clutter': 0},
             'model_comparison': {},
             'compliance_score': 100
         }
@@ -740,7 +750,7 @@ class ReportGenerator:
         summary['total_issues'] = len(all_issues)
 
         for issue in all_issues:
-            severity = issue.get('severity', 'A')
+            severity = issue.get('severity', 'medium')
             category = issue.get('category', 'unknown')
 
             if severity in summary['issues_by_severity']:
@@ -748,8 +758,8 @@ class ReportGenerator:
             if category in summary['issues_by_category']:
                 summary['issues_by_category'][category] += 1
 
-        # Calculate compliance score
-        critical_issues = summary['issues_by_severity']['A'] + summary['issues_by_severity']['AA']
+        # Calculate design quality score
+        critical_issues = summary['issues_by_severity']['critical'] + summary['issues_by_severity']['high']
         summary['compliance_score'] = max(0, 100 - (critical_issues * 3))
 
         return summary
@@ -764,7 +774,7 @@ class ReportGenerator:
 
         # CSV headers
         headers = [
-            'Model', 'File', 'Issue_ID', 'WCAG_Guideline', 'Severity', 'Category',
+            'Model', 'File', 'Issue_ID', 'Principle_ID', 'Severity', 'Category',
             'Description', 'Line_Numbers', 'Code_Snippet', 'Recommendation'
         ]
         writer.writerow(headers)
@@ -782,7 +792,7 @@ class ReportGenerator:
                             model,
                             file_name,
                             issue.get('issue_id', ''),
-                            issue.get('wcag_guideline', ''),
+                            issue.get('principle_id', issue.get('wcag_guideline', '')),
                             issue.get('severity', ''),
                             issue.get('category', ''),
                             issue.get('description', ''),

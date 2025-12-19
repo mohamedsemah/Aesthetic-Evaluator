@@ -9,7 +9,12 @@ env/
 .venv/
 .env
 backend/.env
+frontend/.env
+frontend/.env.local
+frontend/.env.production.local
 *.env
+!*.env.example
+!env.template
 
 # IDE
 .vscode/

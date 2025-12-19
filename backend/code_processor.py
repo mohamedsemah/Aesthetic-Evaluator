@@ -25,18 +25,19 @@ class CodeProcessor:
             '.ui'  # Qt Designer files
         }
 
-        self.infotainment_frameworks = {
-            'android_auto': ['.xml', '.java', '.kt'],
-            'carplay': ['.swift', '.m', '.h'],
-            'qnx': ['.cpp', '.cc', '.h', '.qml'],
-            'linux_ivi': ['.cpp', '.c', '.h', '.js', '.html'],
+        self.frameworks = {
+            'android': ['.xml', '.java', '.kt'],
+            'ios': ['.swift', '.m', '.h'],
+            'web': ['.html', '.css', '.js', '.jsx', '.ts', '.tsx'],
+            'react': ['.jsx', '.tsx', '.js', '.ts'],
+            'vue': ['.vue'],
             'flutter': ['.dart'],
             'react_native': ['.js', '.jsx', '.ts', '.tsx']
         }
 
     @classmethod
     def is_supported_file(cls, file_path: Path) -> bool:
-        """Check if file is supported for accessibility analysis"""
+        """Check if file is supported for aesthetics analysis"""
         processor = cls()
         return file_path.suffix.lower() in processor.supported_extensions
 
@@ -109,7 +110,7 @@ class CodeProcessor:
 
     def apply_fixes(self, original_content: str, fixes: List[Dict[str, Any]],
                     file_path: Path) -> Tuple[str, Dict[str, Any]]:
-        """Apply accessibility fixes to file content"""
+        """Apply aesthetic fixes to file content"""
         modified_content = original_content
         applied_fixes = []
         failed_fixes = []
@@ -232,7 +233,7 @@ class CodeProcessor:
                 summary = f"""
 File: {relative_path}
 Fixed: {datetime.now().isoformat()}
-Changes: Applied accessibility fixes with // PATCHED comments
+Changes: Applied aesthetic fixes with // PATCHED comments
 Original preserved in: original/{relative_path}
                 """.strip()
                 zipf.writestr(f"fixed/{relative_path}.summary.txt", summary)
@@ -286,7 +287,7 @@ Original preserved in: original/{relative_path}
         return validation_results
 
     def _detect_framework(self, file_path: Path) -> Optional[str]:
-        """Detect infotainment framework based on file patterns"""
+        """Detect framework based on file patterns"""
         file_ext = file_path.suffix.lower()
         file_name = file_path.name.lower()
 
@@ -294,49 +295,56 @@ Original preserved in: original/{relative_path}
         try:
             content, _ = self.read_file_content(file_path)
 
-            # Android Auto indicators
+            # Android indicators
             if any(indicator in content for indicator in [
-                'android.car', 'CarAppService', 'androidx.car',
-                'android:layout_width', 'android:layout_height'
+                'android:layout_width', 'android:layout_height',
+                'androidx.', 'import android'
             ]):
-                return 'android_auto'
+                return 'android'
 
-            # CarPlay indicators
+            # iOS indicators
             if any(indicator in content for indicator in [
-                'CarPlay', 'CPTemplate', 'CPListTemplate',
-                '#import <CarPlay/', '@import CarPlay'
+                'import UIKit', 'import SwiftUI', '@IBOutlet',
+                '#import <UIKit/', 'NSLayoutConstraint'
             ]):
-                return 'carplay'
+                return 'ios'
 
-            # QNX indicators
+            # React indicators
             if any(indicator in content for indicator in [
-                'QNX', 'qnx/', 'QtQuick', 'QML',
-                '#include <qnx', 'import QtQuick'
+                'import React', 'from \'react\'', 'React.Component',
+                'useState', 'useEffect'
             ]):
-                return 'qnx'
+                return 'react'
+
+            # Vue indicators
+            if any(indicator in content for indicator in [
+                'import Vue', 'export default', '<template>',
+                'vue-router', 'Vue.component'
+            ]):
+                return 'vue'
 
             # React Native indicators
             if any(indicator in content for indicator in [
-                'react-native', 'import React', 'from \'react\'',
-                'StyleSheet.create', 'View, Text'
+                'react-native', 'StyleSheet.create', 'View, Text',
+                'import { View }'
             ]):
                 return 'react_native'
 
             # Flutter indicators
-            if 'flutter' in content or 'dart:' in content:
+            if 'flutter' in content or 'dart:' in content or 'import \'package:flutter':
                 return 'flutter'
 
             # Generic web-based
             if any(indicator in content for indicator in [
                 '<!DOCTYPE html>', '<html', 'document.', 'window.'
             ]):
-                return 'web_based'
+                return 'web'
 
         except Exception:
             pass
 
         # Fallback to extension-based detection
-        for framework, extensions in self.infotainment_frameworks.items():
+        for framework, extensions in self.frameworks.items():
             if file_ext in extensions:
                 return framework
 
@@ -352,7 +360,7 @@ Original preserved in: original/{relative_path}
                 'total_lines': len(content.split('\n')),
                 'cyclomatic_complexity': self._calculate_cyclomatic_complexity(content),
                 'ui_elements': self._count_ui_elements(content, file_path.suffix),
-                'accessibility_features': self._count_accessibility_features(content),
+                'aesthetic_features': self._count_aesthetic_features(content),
                 'complexity_score': 'low'
             }
 
@@ -404,15 +412,18 @@ Original preserved in: original/{relative_path}
 
         return 0
 
-    def _count_accessibility_features(self, content: str) -> int:
-        """Count existing accessibility features"""
-        accessibility_patterns = [
-            r'alt\s*=', r'aria-\w+', r'role\s*=', r'tabindex\s*=',
-            r'contentDescription', r'accessibilityLabel', r'accessibilityHint'
+    def _count_aesthetic_features(self, content: str) -> int:
+        """Count existing aesthetic features"""
+        aesthetic_patterns = [
+            r'border-radius\s*:', r'box-shadow\s*:', r'var\(--[a-z-]+',
+            r'font-size\s*:', r'font-weight\s*:', r'line-height\s*:',
+            r'margin\s*:', r'padding\s*:', r'gap\s*:',
+            r'color\s*:', r'background-color\s*:',
+            r'transition\s*:', r'transform\s*:'
         ]
 
         count = 0
-        for pattern in accessibility_patterns:
+        for pattern in aesthetic_patterns:
             import re
             count += len(re.findall(pattern, content, re.IGNORECASE))
 

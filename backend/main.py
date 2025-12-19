@@ -19,7 +19,7 @@ import traceback
 import sys
 
 from llm_clients import LLMClient
-from wcag_analyzer import WCAGAnalyzer
+from aesthetics_analyzer import AestheticsAnalyzer
 from code_processor import CodeProcessor
 from report_generator import ReportGenerator
 from enhanced_remediation import EnhancedRemediationService
@@ -214,13 +214,13 @@ app = FastAPI(
     title=settings.APP_NAME, 
     version=settings.APP_VERSION,
     description="""
-    Production-ready accessibility analyzer for infotainment systems.
+    Production-ready aesthetics analyzer for web and mobile interfaces.
     
     ## Features
     
-    * **WCAG 2.2 Compliance Analysis**: Comprehensive accessibility detection
+    * **Design Quality Analysis**: Comprehensive aesthetic issue detection
     * **Multi-LLM Support**: GPT-4o, Claude Opus 4, DeepSeek-V3, LLaMA Maverick
-    * **Remediation**: AI-powered code fixes with preview and rollback
+    * **Remediation**: AI-powered design fixes with preview and rollback
     * **Session Management**: Persistent sessions with expiration
     * **Security**: Authentication, rate limiting, input validation
     
@@ -234,8 +234,8 @@ app = FastAPI(
     lifespan=lifespan,
     openapi_tags=[
         {"name": "Upload", "description": "File upload operations"},
-        {"name": "Analysis", "description": "Accessibility analysis operations"},
-        {"name": "Remediation", "description": "Code remediation operations"},
+        {"name": "Analysis", "description": "Aesthetics analysis operations"},
+        {"name": "Remediation", "description": "Design remediation operations"},
         {"name": "Session", "description": "Session management"},
         {"name": "Health", "description": "Health check endpoints"},
     ]
@@ -452,11 +452,11 @@ async def upload_files(
 
 
 @app.post("/analyze")
-async def analyze_accessibility(
+async def analyze_aesthetics(
     request: AnalysisRequest,
     user_id: Optional[str] = Depends(get_current_user)
 ):
-    """Perform accessibility analysis using specified LLM models - Detection Only"""
+    """Perform aesthetics analysis using specified LLM models - Detection Only"""
     logger.info(f"=== STARTING DETECTION ANALYSIS ===")
     logger.info(f"Session ID: {request.session_id}")
     logger.info(f"Models: {request.models}")
@@ -487,13 +487,13 @@ async def analyze_accessibility(
             logger.error(f"Traceback: {traceback.format_exc()}")
             raise HTTPException(status_code=500, detail=f"LLM client initialization failed: {str(e)}")
 
-        logger.info("Initializing WCAG analyzer...")
+        logger.info("Initializing aesthetics analyzer...")
         try:
-            wcag_analyzer = WCAGAnalyzer()
-            log_success("WCAG analyzer initialized successfully")
+            aesthetics_analyzer = AestheticsAnalyzer()
+            log_success("Aesthetics analyzer initialized successfully")
         except Exception as e:
-            log_error(f"WCAG analyzer initialization failed: {str(e)}")
-            raise HTTPException(status_code=500, detail=f"WCAG analyzer initialization failed: {str(e)}")
+            log_error(f"Aesthetics analyzer initialization failed: {str(e)}")
+            raise HTTPException(status_code=500, detail=f"Aesthetics analyzer initialization failed: {str(e)}")
 
         results = {}
 
@@ -535,8 +535,8 @@ async def analyze_accessibility(
                     # Analyze with LLM for detection only
                     logger.info(f"Starting LLM detection analysis with {model}...")
                     try:
-                        logger.info(f"Calling detect_accessibility_issues...")
-                        analysis_result = await llm_client.detect_accessibility_issues(
+                        logger.info(f"Calling detect_aesthetic_issues...")
+                        analysis_result = await llm_client.detect_aesthetic_issues(
                             content, file_info["name"], model
                         )
 
@@ -549,8 +549,8 @@ async def analyze_accessibility(
                         else:
                             issues_count = len(analysis_result.get("issues", []))
                             logger.info(
-                                f"LLM ({model}) detected {issues_count} accessibility issues in {file_info['name']} "
-                                f"(Note: Static analysis will add additional issues during WCAG processing)"
+                                f"LLM ({model}) detected {issues_count} aesthetic issues in {file_info['name']} "
+                                f"(Note: Static analysis will add additional issues during aesthetics processing)"
                             )
 
                     except Exception as e:
@@ -567,9 +567,9 @@ async def analyze_accessibility(
                         }
 
                     # Process and enhance results
-                    logger.info("Processing results with WCAG analyzer...")
+                    logger.info("Processing results with aesthetics analyzer...")
                     try:
-                        processed_result = wcag_analyzer.process_llm_result(
+                        processed_result = aesthetics_analyzer.process_llm_result(
                             analysis_result, file_info, content
                         )
                         
@@ -579,12 +579,12 @@ async def analyze_accessibility(
                         total_count = processed_result.get("total_issues", len(processed_result.get("issues", [])))
                         
                         logger.info(
-                            f"WCAG processing completed for {file_info['name']}: "
+                            f"Aesthetics processing completed for {file_info['name']}: "
                             f"{llm_count} LLM issues + {static_count} static issues = {total_count} total"
                         )
-                        log_success("WCAG processing completed")
+                        log_success("Aesthetics processing completed")
                     except Exception as e:
-                        log_error(f"WCAG processing failed: {str(e)}")
+                        log_error(f"Aesthetics processing failed: {str(e)}")
                         logger.error(f"Traceback: {traceback.format_exc()}")
 
                         # Fallback to basic result structure
@@ -592,7 +592,7 @@ async def analyze_accessibility(
                             "file_info": file_info,
                             "total_issues": len(analysis_result.get("issues", [])),
                             "issues": analysis_result.get("issues", []),
-                            "error": f"WCAG processing failed: {str(e)}",
+                            "error": f"Aesthetics processing failed: {str(e)}",
                             "llm_result": analysis_result,
                             "llm_issues_count": len(analysis_result.get("issues", [])),
                             "static_issues_count": 0
@@ -646,7 +646,7 @@ async def analyze_accessibility(
         return {
             "session_id": request.session_id,
             "results": results,
-            "analysis_type": "detection"
+            "analysis_type": "aesthetics_detection"
         }
 
     except HTTPException:
@@ -699,7 +699,7 @@ async def debug_session_structure(session_id: str):
                                 "model": model,
                                 "file": file_result.get('file_info', {}).get('name', 'Unknown'),
                                 "issue_id": issue_id,
-                                "wcag_guideline": issue.get('wcag_guideline', 'No guideline')
+                                "principle_id": issue.get('principle_id', 'No principle')
                             })
 
     # Analyze files structure
@@ -1038,7 +1038,7 @@ async def download_report(
         return FileResponse(
             pdf_path,
             media_type="application/pdf",
-            filename=f"accessibility_report_{session_id}.pdf"
+            filename=f"aesthetics_report_{session_id}.pdf"
         )
     except Exception as e:
         logger.error(f"Report generation failed: {str(e)}")
@@ -1065,11 +1065,16 @@ async def health_detailed():
 
 if __name__ == "__main__":
     import uvicorn
+    import os
 
-    logger.info("Starting application server")
+    port = int(os.environ.get("PORT", 8000))
+    workers = int(os.environ.get("WORKERS", 1))
+    
+    logger.info("Starting application server", port=port, workers=workers)
     uvicorn.run(
         app, 
         host="0.0.0.0", 
-        port=8000,
+        port=port,
+        workers=workers if workers > 1 else 1,  # Workers only work in production mode
         log_config=None  # We're using structured logging
     )

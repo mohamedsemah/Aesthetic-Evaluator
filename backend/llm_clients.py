@@ -41,13 +41,13 @@ class LLMClient:
 
         self.deepseek_api_key = os.getenv("DEEPSEEK_API_KEY")
 
-        # Enhanced WCAG 2.2 Detection Prompt - Comprehensive and Systematic
+        # Enhanced Aesthetics Detection Prompt - Comprehensive and Systematic
         self.detection_prompt = """
-You are an expert accessibility auditor specializing in WCAG 2.2 compliance for infotainment systems. 
+You are an expert design quality auditor specializing in aesthetics and visual design for web and mobile interfaces. 
 
 CRITICAL INSTRUCTIONS:
 1. Analyze EVERY line of code systematically
-2. Report EXACT line numbers where issues occur
+2. Report EXACT line numbers where aesthetic issues occur
 3. Only report issues that actually exist in the provided code
 4. Use the numbered line references provided below
 
@@ -57,78 +57,122 @@ Code with line numbers:
 {numbered_code}
 ```
 
-SYSTEMATIC WCAG 2.2 ANALYSIS CHECKLIST:
+SYSTEMATIC AESTHETICS ANALYSIS CHECKLIST:
 
-**A. PERCEIVABLE ISSUES (Level A/AA/AAA)**
-1. **1.1.1 Non-text Content (Level A):**
-   - Check ALL <img> tags for missing/empty alt attributes
-   - Check <input type="image"> for missing alt attributes
-   - Check <area> tags in image maps for missing alt attributes
-   - Check CSS background-images used for content (not decoration)
-   - For infotainment: Check icon buttons, media thumbnails, status indicators
+**A. COLOR HARMONY & CONSISTENCY**
+1. **COLOR_001 - Color Harmony:**
+   - Check for clashing color combinations
+   - Verify color palette follows color theory (complementary, analogous, triadic)
+   - Identify colors that don't work well together
+   - Check for proper color contrast for readability (minimum 4.5:1 for text)
 
-2. **1.3.1 Info and Relationships (Level A):**
-   - Check form inputs missing <label> elements or aria-label
-   - Check headings (h1-h6) are properly nested
-   - Check data tables have <th> elements with scope attributes
-   - Check lists use proper <ul>, <ol>, <li> structure
-   - For infotainment: Check menu hierarchies, navigation structures
+2. **COLOR_002 - Color Palette Consistency:**
+   - Check for hardcoded color values instead of design tokens/CSS variables
+   - Identify inconsistent color usage across components
+   - Verify color values follow a consistent palette
+   - Check for too many unique color values (should use a limited palette)
 
-3. **1.3.2 Meaningful Sequence (Level A):**
-   - Check logical reading order matches visual order
-   - Check tab order makes sense (tabindex issues)
-   - For infotainment: Check sequential navigation through controls
+3. **COLOR_003 - Color Contrast for Readability:**
+   - Verify text has sufficient contrast against background
+   - Check button/UI element contrast ratios
+   - Identify low-contrast color combinations
 
-4. **1.3.3 Sensory Characteristics (Level A):**
-   - Check instructions don't rely solely on color/shape/position
-   - Example: "Click the red button" should include other identifiers
-   - For infotainment: Check voice prompts don't rely on visual-only cues
+**B. SPACING & LAYOUT**
+4. **SPACING_001 - 8px Grid System:**
+   - Check if spacing values (margin, padding, gap) follow 8px grid system
+   - Identify spacing values that aren't multiples of 8px
+   - Verify consistent spacing scale usage
 
-5. **1.4.1 Use of Color (Level A):**
-   - Check information isn't conveyed by color alone
-   - Check form validation errors use more than just color
-   - For infotainment: Check status indicators (green/red) have additional cues
+5. **SPACING_002 - Consistent Margins/Padding:**
+   - Check for inconsistent spacing values across similar components
+   - Identify arbitrary spacing values
+   - Verify spacing follows a consistent scale
 
-6. **1.4.3 Contrast (Level AA):**
-   - Check text contrast ratios (4.5:1 for normal text, 3:1 for large text)
-   - Check UI component contrast (3:1 minimum)
-   - For infotainment: Critical for readability while driving
+6. **SPACING_003 - Whitespace Balance:**
+   - Check for overcrowded layouts
+   - Identify areas with insufficient whitespace
+   - Verify proper breathing room between elements
 
-**B. OPERABLE ISSUES (Level A/AA/AAA)**
-7. **2.1.1 Keyboard (Level A):**
-   - Check ALL interactive elements can be reached by keyboard
-   - Check for onclick without onkeydown/onkeypress handlers
-   - Check custom controls have proper keyboard support
-   - For infotainment: Critical for hands-free operation
+**C. TYPOGRAPHY**
+7. **TYPOGRAPHY_001 - Font Hierarchy:**
+   - Check for too many different font sizes (should use a typography scale)
+   - Verify proper font size relationships (headings vs body)
+   - Identify inconsistent font sizing
 
-8. **2.4.7 Focus Visible (Level AA):**
-   - Check ALL focusable elements have visible focus indicators
-   - Check focus indicators have sufficient contrast
-   - For infotainment: Essential for eyes-free operation
+8. **TYPOGRAPHY_002 - Readable Font Sizes:**
+   - Check for font sizes that are too small (<12px for body text)
+   - Verify appropriate font sizes for different contexts
+   - Identify readability issues
 
-9. **2.5.8 Target Size (Level AA):**
-   - Check touch targets are at least 44x44 CSS pixels
-   - For infotainment: Critical for vehicle vibration/movement
+9. **TYPOGRAPHY_003 - Line Height Optimization:**
+   - Check for poor line-height values (should be 1.4-1.6 for body text)
+   - Verify proper line spacing for readability
 
-**C. UNDERSTANDABLE ISSUES (Level A/AA/AAA)**
-10. **3.3.2 Labels or Instructions (Level A):**
-    - Check ALL form fields have labels or instructions
-    - Check required fields are clearly marked
-    - For infotainment: Check voice input prompts
+10. **TYPOGRAPHY_004 - Font Pairing:**
+    - Check for poor font combinations
+    - Verify font families work well together
+    - Identify typography inconsistencies
 
-**D. ROBUST ISSUES (Level A/AA/AAA)**
-11. **4.1.2 Name, Role, Value (Level A):**
-    - Check ALL UI components have accessible names
-    - Check custom controls have proper ARIA roles
-    - Check state changes are programmatically determinable
-    - For infotainment: Check media controls, navigation states
+**D. VISUAL HIERARCHY**
+11. **HIERARCHY_001 - Size Relationships:**
+    - Check for poor size relationships between elements
+    - Verify proper emphasis through size
+    - Identify elements that should be larger/smaller
+
+12. **HIERARCHY_002 - Visual Emphasis:**
+    - Check for lack of visual emphasis where needed
+    - Verify proper use of font-weight, color, size for hierarchy
+    - Identify unclear information architecture
+
+**E. CONSISTENCY**
+13. **CONSISTENCY_001 - Component Patterns:**
+    - Check for inconsistent component designs
+    - Identify similar components with different styling
+    - Verify design system consistency
+
+14. **CONSISTENCY_002 - Spacing Consistency:**
+    - Check for inconsistent spacing between similar elements
+    - Identify spacing that doesn't follow patterns
+
+15. **CONSISTENCY_003 - Color Usage Consistency:**
+    - Check for inconsistent color usage (same semantic meaning, different colors)
+    - Identify color tokens that should be standardized
+
+**F. MODERN DESIGN PATTERNS**
+16. **MODERN_001 - Card Design Patterns:**
+    - Check for missing modern card designs (shadows, borders, rounded corners)
+    - Identify outdated flat design patterns
+    - Verify use of depth and elevation
+
+17. **MODERN_002 - Shadow and Depth:**
+    - Check for appropriate use of shadows for depth
+    - Identify missing elevation in layered interfaces
+
+18. **MODERN_003 - Border Radius Consistency:**
+    - Check for inconsistent border-radius values
+    - Verify rounded corners follow a consistent scale
+
+19. **MODERN_004 - Modern UI Patterns:**
+    - Check for outdated design patterns
+    - Identify missing modern UI conventions
+    - Verify contemporary design trends
+
+**G. BALANCE & CLUTTER**
+20. **BALANCE_001 - Visual Weight Distribution:**
+    - Check for unbalanced layouts
+    - Identify elements that are too heavy/light visually
+
+21. **CLUTTER_001 - Visual Clutter:**
+    - Check for overcrowded interfaces
+    - Identify unnecessary elements
+    - Verify clean, minimal design
 
 **ANALYSIS METHODOLOGY:**
 1. Go through code line by line
-2. For each WCAG criterion above, check if violations exist
+2. For each aesthetic principle above, check if violations exist
 3. Record EXACT line numbers where issues are found
 4. Validate that reported code snippets match actual lines
-5. Prioritize by severity and driver safety impact
+5. Prioritize by severity (critical > high > medium > low)
 
 **OUTPUT FORMAT:**
 Return ONLY valid JSON with this exact structure:
@@ -136,17 +180,16 @@ Return ONLY valid JSON with this exact structure:
   "total_issues": 0,
   "issues": [
     {{
-      "issue_id": "WCAG_X_X_X_NNN",
-      "wcag_guideline": "X.X.X Guideline Name",
-      "severity": "A|AA|AAA",
+      "issue_id": "AESTHETIC_XXX_NNN",
+      "principle_id": "COLOR_001|SPACING_001|TYPOGRAPHY_001|etc",
+      "severity": "critical|high|medium|low",
       "line_numbers": [actual_line_number],
-      "description": "Specific issue description",
-      "impact": "How this affects users with disabilities",
+      "description": "Specific aesthetic issue description",
+      "impact": "How this affects visual design quality and user experience",
       "code_snippet": "Exact code from the specified lines",
       "recommendation": "Specific fix with code example",
-      "category": "perceivable|operable|understandable|robust",
-      "infotainment_risk": "low|medium|high",
-      "driver_safety_impact": "none|minor|moderate|critical"
+      "category": "color|spacing|typography|hierarchy|consistency|modern_patterns|balance|clutter",
+      "design_impact": "low|medium|high"
     }}
   ],
   "file_info": {{
@@ -161,9 +204,9 @@ IMPORTANT: Only report issues that actually exist in the provided code. Verify l
 
         # Enhanced Remediation Prompt
         self.remediation_prompt = """
-You are an expert accessibility developer specializing in WCAG 2.2 compliance fixes for infotainment systems.
+You are an expert design developer specializing in aesthetic improvements and visual design fixes for web and mobile interfaces.
 
-TASK: Fix the specific accessibility violation below while preserving all existing functionality.
+TASK: Fix the specific aesthetic issue below while preserving all existing functionality and improving visual design quality.
 
 File: {filename}
 Current Code:
@@ -173,7 +216,7 @@ Current Code:
 
 **ISSUE TO FIX:**
 - Issue ID: {issue_id}
-- WCAG Guideline: {wcag_guideline}  
+- Aesthetic Principle: {principle_id}  
 - Description: {description}
 - Line Numbers: {line_numbers}
 - Current Code Snippet: {code_snippet}
@@ -187,14 +230,14 @@ Return ONLY valid JSON:
       "line_number": actual_line_number,
       "original": "original code line",
       "fixed": "fixed code line", 
-      "explanation": "Why this change fixes the WCAG violation",
-      "wcag_principle": "Which WCAG principle this addresses"
+      "explanation": "Why this change improves the aesthetic quality",
+      "aesthetic_principle": "Which aesthetic principle this addresses"
     }}
   ],
   "validation": {{
-    "wcag_compliance": "How this fix ensures WCAG 2.2 compliance",
-    "testing_notes": "How to test that the fix works",
-    "driver_safety": "How this improves safety for drivers"
+    "design_improvement": "How this fix improves visual design quality",
+    "testing_notes": "How to test that the fix works visually",
+    "user_experience": "How this improves user experience and visual appeal"
   }}
 }}
 
@@ -282,13 +325,13 @@ CRITICAL: Provide complete fixed file content with // FIXED comments marking all
 
         return validation_result
 
-    async def detect_accessibility_issues(self, code: str, filename: str, model: str) -> Dict[str, Any]:
-        """Enhanced accessibility detection with accurate line tracking"""
+    async def detect_aesthetic_issues(self, code: str, filename: str, model: str) -> Dict[str, Any]:
+        """Enhanced aesthetics detection with accurate line tracking"""
         try:
             # Check if we need to chunk the code for models with small context windows
             if model == "llama-maverick" and len(code) > 2000:  # LLaMA has small context window
                 logger.info(f"Code too large for {model}, chunking...")
-                return await self._detect_issues_chunked(code, filename, model)
+                return await self._detect_aesthetic_issues_chunked(code, filename, model)
 
             # Create numbered code for accurate line reference
             numbered_code = self._create_numbered_code(code)
@@ -336,8 +379,8 @@ CRITICAL: Provide complete fixed file content with // FIXED comments marking all
                 }
             }
 
-    async def _detect_issues_chunked(self, code: str, filename: str, model: str) -> Dict[str, Any]:
-        """Detect accessibility issues by processing code in chunks for models with small context windows"""
+    async def _detect_aesthetic_issues_chunked(self, code: str, filename: str, model: str) -> Dict[str, Any]:
+        """Detect aesthetic issues by processing code in chunks for models with small context windows"""
         logger.info("Starting chunked analysis for large file...")
 
         lines = code.split('\n')
@@ -346,7 +389,7 @@ CRITICAL: Provide complete fixed file content with // FIXED comments marking all
 
         # Create a shorter, focused prompt for chunked analysis
         chunk_prompt_template = """
-You are an accessibility expert. Analyze this code chunk for WCAG 2.2 violations.
+You are a design quality expert. Analyze this code chunk for aesthetic and design issues.
 
 File: {filename} (Lines {start_line}-{end_line})
 Code:
@@ -354,28 +397,29 @@ Code:
 {chunk_code}
 ```
 
-Find accessibility issues and return JSON:
+Find aesthetic issues and return JSON:
 {{
   "issues": [
     {{
-      "issue_id": "WCAG_X_X_X_NNN",
-      "wcag_guideline": "X.X.X Guideline Name", 
-      "severity": "A|AA|AAA",
+      "issue_id": "AESTHETIC_XXX_NNN",
+      "principle_id": "COLOR_001|SPACING_001|TYPOGRAPHY_001|etc",
+      "severity": "critical|high|medium|low",
       "line_numbers": [line_number],
       "description": "Issue description",
       "code_snippet": "problematic code",
       "recommendation": "how to fix",
-      "category": "perceivable|operable|understandable|robust"
+      "category": "color|spacing|typography|hierarchy|consistency|modern_patterns|balance|clutter"
     }}
   ]
 }}
 
 Focus on:
-- Missing alt attributes on images
-- Missing labels on form inputs  
-- Missing keyboard support (onclick without onkeydown)
-- Missing focus styles
-- Missing ARIA attributes
+- Color harmony and palette consistency
+- Spacing system (8px grid)
+- Typography hierarchy and readability
+- Visual hierarchy issues
+- Design consistency problems
+- Modern design patterns
 """
 
         for i in range(0, len(lines), chunk_size):
@@ -439,10 +483,10 @@ Focus on:
             "analysis_method": "chunked"
         }
 
-    async def fix_accessibility_issues(self, code: str, filename: str, model: str) -> Dict[str, Any]:
+    async def fix_aesthetic_issues(self, code: str, filename: str, model: str) -> Dict[str, Any]:
         """Enhanced remediation with validation"""
         # First detect issues
-        detection_result = await self.detect_accessibility_issues(code, filename, model)
+        detection_result = await self.detect_aesthetic_issues(code, filename, model)
 
         if detection_result.get("error") or not detection_result.get("issues"):
             return detection_result
@@ -462,7 +506,7 @@ Focus on:
                         numbered_code=numbered_code,
                         filename=filename,
                         issue_id=issue["issue_id"],
-                        wcag_guideline=issue["wcag_guideline"],
+                        principle_id=issue.get("principle_id", issue.get("wcag_guideline", "UNKNOWN")),
                         description=issue["description"],
                         line_numbers=issue["line_numbers"],
                         code_snippet=issue.get("code_snippet", "")
@@ -496,22 +540,38 @@ Focus on:
     def _validate_fix_quality(self, original_code: str, fixed_code: str, issue: Dict[str, Any]) -> bool:
         """Validate that a fix actually improves the code"""
         # Basic validation - ensure fix contains expected improvements
-        issue_type = issue.get("wcag_guideline", "").split()[0] if issue.get("wcag_guideline") else ""
+        principle_id = issue.get("principle_id", "")
+        category = issue.get("category", "")
 
         validation_patterns = {
-            "1.1.1": [r'alt\s*=\s*["\'][^"\']+["\']'],  # Alt text added
-            "2.1.1": [r'onkeydown', r'onkeypress', r'tabindex'],  # Keyboard support
-            "2.4.7": [r':focus\s*{', r'focus-visible'],  # Focus styles
-            "3.3.2": [r'<label', r'aria-label', r'aria-labelledby'],  # Labels
-            "4.1.2": [r'role\s*=', r'aria-\w+'],  # ARIA attributes
+            "COLOR_001": [r'#[0-9a-fA-F]{3,6}', r'rgb\s*\(', r'rgba\s*\('],  # Color values
+            "COLOR_002": [r'var\(--', r'--[a-z-]+-color'],  # CSS variables for colors
+            "SPACING_001": [r'\d+px'],  # Spacing values
+            "SPACING_002": [r'margin|padding|gap'],  # Spacing properties
+            "TYPOGRAPHY_001": [r'font-size\s*:', r'font-weight\s*:'],  # Typography
+            "TYPOGRAPHY_002": [r'font-size\s*:\s*1[2-9]px|font-size\s*:\s*[2-9]\d+px'],  # Readable sizes
+            "HIERARCHY_001": [r'font-size\s*:', r'font-weight\s*:'],  # Hierarchy
+            "MODERN_001": [r'box-shadow', r'border-radius'],  # Modern patterns
         }
 
         # Check if relevant improvements are present
-        if issue_type in validation_patterns:
-            for pattern in validation_patterns[issue_type]:
-                if re.search(pattern, fixed_code, re.IGNORECASE) and not re.search(pattern, original_code,
-                                                                                   re.IGNORECASE):
+        if principle_id in validation_patterns:
+            for pattern in validation_patterns[principle_id]:
+                if re.search(pattern, fixed_code, re.IGNORECASE):
                     return True
+        elif category in ['color', 'spacing', 'typography', 'hierarchy', 'modern_patterns']:
+            # Category-based validation
+            category_patterns = {
+                'color': [r'color\s*:', r'background-color\s*:', r'var\(--'],
+                'spacing': [r'margin|padding|gap'],
+                'typography': [r'font-size|font-weight|line-height'],
+                'hierarchy': [r'font-size|font-weight'],
+                'modern_patterns': [r'box-shadow|border-radius'],
+            }
+            if category in category_patterns:
+                for pattern in category_patterns[category]:
+                    if re.search(pattern, fixed_code, re.IGNORECASE):
+                        return True
 
         # If we can't validate specifically, check for general improvements
         return "// FIXED" in fixed_code or len(fixed_code) > len(original_code)
@@ -925,13 +985,13 @@ Focus on:
         return ["gpt-4o", "claude-opus-4", "deepseek-v3", "llama-maverick"]
 
     async def fix_specific_issue(self, code: str, issue_id: str, model: str) -> Dict[str, Any]:
-        """Fix a specific accessibility issue with enhanced validation"""
+        """Fix a specific aesthetic issue with enhanced validation"""
         try:
             # Simple fix prompt for specific issues
             numbered_code = self._create_numbered_code(code)
 
             fix_prompt = f"""
-Fix the accessibility issue with ID: {issue_id} in the following code:
+Fix the aesthetic issue with ID: {issue_id} in the following code:
 
 Code with line numbers:
 ```
@@ -939,7 +999,7 @@ Code with line numbers:
 ```
 
 Return the fixed code with // FIXED comments for all changes.
-Follow WCAG 2.2 guidelines and infotainment best practices.
+Follow modern design principles and aesthetic best practices.
 
 Return as JSON:
 {{
@@ -976,15 +1036,15 @@ Return as JSON:
         """Calculate a validation score for the fix quality"""
         score = 0.0
 
-        # Check for common accessibility improvements
+        # Check for common aesthetic improvements
         improvements = [
-            (r'alt\s*=\s*["\'][^"\']+["\']', 0.2),  # Alt text
-            (r'aria-label\s*=', 0.15),  # ARIA labels
-            (r'role\s*=', 0.15),  # ARIA roles
-            (r':focus\s*{', 0.1),  # Focus styles
-            (r'tabindex\s*=', 0.1),  # Tab order
-            (r'onkeydown|onkeypress', 0.15),  # Keyboard support
-            (r'<label', 0.15),  # Form labels
+            (r'var\(--[a-z-]+-color', 0.2),  # CSS variables for colors
+            (r'border-radius\s*:', 0.15),  # Rounded corners
+            (r'box-shadow\s*:', 0.15),  # Shadows
+            (r'font-size\s*:\s*1[2-9]px|font-size\s*:\s*[2-9]\d+px', 0.1),  # Readable font sizes
+            (r'line-height\s*:\s*1\.[4-6]', 0.1),  # Proper line height
+            (r'margin|padding|gap', 0.15),  # Spacing properties
+            (r'font-weight\s*:', 0.15),  # Font weight for hierarchy
         ]
 
         for pattern, weight in improvements:
