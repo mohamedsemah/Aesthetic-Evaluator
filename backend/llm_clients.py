@@ -24,7 +24,12 @@ except ImportError:
 
 class LLMClient:
     def __init__(self):
-        self.openai_client = AsyncOpenAI(api_key=os.getenv("OPENAI_API_KEY"))
+        # Initialize OpenAI client only if API key is provided
+        openai_key = os.getenv("OPENAI_API_KEY")
+        if openai_key:
+            self.openai_client = AsyncOpenAI(api_key=openai_key)
+        else:
+            self.openai_client = None
 
         # Fix for Anthropic API - use the correct async client initialization
         anthropic_key = os.getenv("ANTHROPIC_API_KEY")
@@ -665,6 +670,9 @@ Focus on:
 
     async def _call_openai(self, prompt: str, model: str = "gpt-4o") -> Dict[str, Any]:
         """Call OpenAI API with enhanced error handling"""
+        if not self.openai_client:
+            raise Exception("OpenAI API key not configured. Please set OPENAI_API_KEY environment variable.")
+        
         try:
             models_to_try = ["gpt-4o-mini", "gpt-3.5-turbo"] if model == "gpt-4o" else [model]
 
