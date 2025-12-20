@@ -253,8 +253,8 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=settings.allowed_origins_list,
     allow_credentials=True,
-    allow_methods=["GET", "POST"],  # Specific methods only
-    allow_headers=["Content-Type", "Authorization"],  # Specific headers only
+    allow_methods=["GET", "POST", "OPTIONS"],  # Include OPTIONS for preflight
+    allow_headers=["*"],  # Allow all headers for FormData uploads
 )
 
 # Initialize database
