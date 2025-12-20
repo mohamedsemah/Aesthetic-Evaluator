@@ -1048,7 +1048,8 @@ async def download_report(
 @app.get("/health", tags=["Health"])
 async def health_check():
     """Basic health check endpoint - liveness probe"""
-    return await liveness_check()
+    # Return immediately without async overhead
+    return {"status": "healthy"}
 
 
 @app.get("/health/ready", tags=["Health"])
