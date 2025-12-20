@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import { 
   Sparkles, Upload, FileCode, Brain, BarChart3, Settings, 
   CheckCircle2, XCircle, AlertCircle, Zap, Download, 
@@ -31,6 +31,52 @@ function App() {
   const [appliedRemediations, setAppliedRemediations] = useState({});
 
   const fileInputRef = useRef(null);
+
+  // Restore session from localStorage on mount
+  useEffect(() => {
+    const restoreSession = async () => {
+      const savedSessionId = localStorage.getItem('aesthetic_session_id');
+      if (!savedSessionId) return;
+
+      try {
+        const response = await fetch(`${API_BASE}/session/${savedSessionId}`);
+        if (!response.ok) {
+          // Session not found or expired, clear it
+          localStorage.removeItem('aesthetic_session_id');
+          return;
+        }
+
+        const sessionData = await response.json();
+        
+        // Restore session state
+        setSessionId(savedSessionId);
+        setFiles(sessionData.files || []);
+        setAnalysisResults(sessionData.analysis_results || {});
+        setRemediationResults(sessionData.remediation_results || {});
+        
+        // Determine which page to show based on session state
+        if (sessionData.analysis_results && Object.keys(sessionData.analysis_results).length > 0) {
+          setCurrentPage('results');
+        } else if (sessionData.files && sessionData.files.length > 0) {
+          setCurrentPage('analyze');
+        }
+      } catch (error) {
+        console.error('Failed to restore session:', error);
+        localStorage.removeItem('aesthetic_session_id');
+      }
+    };
+
+    restoreSession();
+  }, []);
+
+  // Save sessionId to localStorage whenever it changes
+  useEffect(() => {
+    if (sessionId) {
+      localStorage.setItem('aesthetic_session_id', sessionId);
+    } else {
+      localStorage.removeItem('aesthetic_session_id');
+    }
+  }, [sessionId]);
 
   const availableModels = [
     { id: 'gpt-4o', name: 'GPT-4o', icon: Brain, color: 'from-blue-500 to-cyan-500', description: 'Advanced reasoning' },
@@ -69,9 +115,14 @@ function App() {
       if (!response.ok) throw new Error('Upload failed');
 
       const result = await response.json();
-      setSessionId(result.session_id);
+      const newSessionId = result.session_id;
+      setSessionId(newSessionId);
       setFiles(result.files);
+      // Clear previous analysis results when starting a new session
+      setAnalysisResults({});
+      setRemediationResults({});
       setCurrentPage('analyze');
+      // sessionId will be saved to localStorage via useEffect
     } catch (error) {
       alert(`Upload failed: ${error.message}`);
     } finally {
