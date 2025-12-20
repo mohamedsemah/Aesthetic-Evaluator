@@ -31,10 +31,11 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         response.headers["Permissions-Policy"] = "geolocation=(), microphone=(), camera=()"
         
         # Content Security Policy
+        # Allow Swagger UI CDN resources for /docs endpoint
         csp = (
             "default-src 'self'; "
-            "script-src 'self' 'unsafe-inline' 'unsafe-eval'; "  # unsafe-inline/eval needed for React
-            "style-src 'self' 'unsafe-inline'; "
+            "script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cdn.jsdelivr.net; "  # Allow Swagger UI CDN
+            "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net; "  # Allow Swagger UI CSS
             "img-src 'self' data: https:; "
             "font-src 'self' data: https:; "
             "connect-src 'self' http://localhost:8000 https://api.openai.com https://api.anthropic.com https://api.deepseek.com https://api.replicate.com; "
