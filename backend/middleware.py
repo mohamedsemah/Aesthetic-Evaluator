@@ -61,8 +61,8 @@ class RateLimitMiddleware(BaseHTTPMiddleware):
         # Get client IP
         client_ip = request.client.host if request.client else "unknown"
         
-        # Skip rate limiting for health checks
-        if request.url.path in ["/health", "/health/detailed"]:
+        # Skip rate limiting for health checks and root
+        if request.url.path in ["/", "/health", "/health/ready", "/health/detailed"]:
             return await call_next(request)
         
         now = datetime.utcnow()

@@ -1045,6 +1045,11 @@ async def download_report(
         raise HTTPException(status_code=500, detail=f"Report generation failed: {str(e)}")
 
 
+@app.get("/", tags=["Health"])
+async def root():
+    """Root endpoint for basic connectivity test"""
+    return {"status": "ok", "service": "Aesthetics Analyzer", "version": settings.APP_VERSION}
+
 @app.get("/health", tags=["Health"])
 async def health_check():
     """Basic health check endpoint - liveness probe"""
