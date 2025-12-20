@@ -249,9 +249,14 @@ if settings.RATE_LIMIT_ENABLED:
     app.add_middleware(RateLimitMiddleware)
 
 # CORS configuration with environment variables
+# Allow both explicit origins and Vercel preview URLs (pattern matching)
+allowed_origins = settings.allowed_origins_list
+allow_origin_regex = r"https://.*\.vercel\.app"  # Match all Vercel subdomains
+
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=settings.allowed_origins_list,
+    allow_origins=allowed_origins,
+    allow_origin_regex=allow_origin_regex,  # Allow all Vercel preview URLs
     allow_credentials=True,
     allow_methods=["GET", "POST", "OPTIONS"],  # Include OPTIONS for preflight
     allow_headers=["*"],  # Allow all headers for FormData uploads
