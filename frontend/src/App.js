@@ -85,8 +85,10 @@ function App() {
   useEffect(() => {
     if (sessionId) {
       localStorage.setItem('aesthetic_session_id', sessionId);
+      console.log('SessionId saved to localStorage:', sessionId);
     } else {
       localStorage.removeItem('aesthetic_session_id');
+      console.log('SessionId removed from localStorage');
     }
   }, [sessionId]);
 
