@@ -279,6 +279,36 @@ function App() {
     setShowIssueModal(true);
   };
 
+  // Start a new analysis - clear everything and reset
+  const handleStartNewAnalysis = useCallback(() => {
+    // Clear all state
+    setSessionId(null);
+    setFiles([]);
+    setAnalysisResults({});
+    setRemediationResults({});
+    setSelectedIssue(null);
+    setShowIssueModal(false);
+    setShowRemediationModal(false);
+    setCurrentRemediation(null);
+    setAppliedRemediations({});
+    
+    // Clear localStorage
+    localStorage.removeItem('aesthetic_session_id');
+    
+    // Reset to welcome page
+    setCurrentPage('welcome');
+    
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    
+    // Scroll to top
+    window.scrollTo(0, 0);
+    
+    console.log('Started new analysis - all data cleared');
+  }, []);
+
   // Sidebar Component
   const Sidebar = () => (
     <div className={`sidebar ${sidebarOpen ? '' : 'translate-x-[-100%]'}`}>
@@ -302,6 +332,16 @@ function App() {
           <Home className="w-5 h-5" />
           <span>Home</span>
         </div>
+        {(sessionId || files.length > 0) && (
+          <div 
+            className="sidebar-item"
+            onClick={handleStartNewAnalysis}
+            style={{ cursor: 'pointer' }}
+          >
+            <RefreshCw className="w-5 h-5" />
+            <span>Start New Analysis</span>
+          </div>
+        )}
         <div 
           className={`sidebar-item ${currentPage === 'upload' ? 'active' : ''}`}
           onClick={() => setCurrentPage('upload')}
@@ -766,8 +806,15 @@ function App() {
               <p className="text-[hsl(var(--text-secondary))]">
                 Review and fix aesthetic issues in your code
               </p>
-                    </div>
+            </div>
             <div className="flex gap-3">
+              <button
+                onClick={handleStartNewAnalysis}
+                className="btn-secondary-modern btn-modern"
+              >
+                <RefreshCw className="w-4 h-4" />
+                New Analysis
+              </button>
               <button onClick={downloadReport} className="btn-secondary-modern btn-modern">
                 <FileText className="w-4 h-4" />
                 Report
