@@ -101,18 +101,17 @@ function App() {
     restoreSession();
   }, []);
 
-  // Save sessionId to localStorage whenever it changes (but not during restoration)
+  // Save sessionId to localStorage whenever it changes
   useEffect(() => {
-    // Skip localStorage updates during restoration to prevent removal
-    if (isRestoringRef.current) return;
-    
     if (sessionId) {
       localStorage.setItem('aesthetic_session_id', sessionId);
       console.log('SessionId saved to localStorage:', sessionId);
     } else {
-      // Only remove if we're not in the middle of restoring
-      localStorage.removeItem('aesthetic_session_id');
-      console.log('SessionId removed from localStorage');
+      // Only remove if we're not in the middle of restoring (to prevent clearing during initial mount)
+      if (!isRestoringRef.current) {
+        localStorage.removeItem('aesthetic_session_id');
+        console.log('SessionId removed from localStorage');
+      }
     }
   }, [sessionId]);
 
