@@ -372,7 +372,7 @@ CRITICAL: Provide complete fixed file content with // FIXED comments marking all
             return raw_result
 
         except Exception as e:
-            logger.error(f"Error in detect_accessibility_issues: {str(e)}")
+            logger.error(f"Error in detect_aesthetic_issues: {str(e)}")
             return {
                 "error": str(e),
                 "total_issues": 0,
@@ -511,7 +511,7 @@ Focus on:
                         numbered_code=numbered_code,
                         filename=filename,
                         issue_id=issue["issue_id"],
-                        principle_id=issue.get("principle_id", issue.get("wcag_guideline", "UNKNOWN")),
+                        principle_id=issue.get("principle_id", issue.get("aesthetic_guideline", issue.get("wcag_guideline", "UNKNOWN"))),
                         description=issue["description"],
                         line_numbers=issue["line_numbers"],
                         code_snippet=issue.get("code_snippet", "")
@@ -683,7 +683,7 @@ Focus on:
                         messages=[
                             {
                                 "role": "system",
-                                "content": "You are an expert accessibility auditor specializing in WCAG 2.2 compliance for infotainment systems. You provide accurate, detailed analysis with precise line numbers."
+                                "content": "You are an expert design quality auditor specializing in aesthetic analysis for web and mobile interfaces. You provide accurate, detailed analysis with precise line numbers."
                             },
                             {"role": "user", "content": prompt}
                         ],
@@ -749,7 +749,7 @@ Focus on:
                     "messages": [
                         {
                             "role": "system",
-                            "content": "You are an expert accessibility auditor specializing in WCAG 2.2 compliance for infotainment systems."
+                            "content": "You are an expert design quality auditor specializing in aesthetic analysis for web and mobile interfaces."
                         },
                         {"role": "user", "content": prompt}
                     ],
@@ -813,7 +813,7 @@ Focus on:
                             "max_new_tokens": 2000,  # Reduced to leave room for input
                             "top_p": 0.9,
                             "repetition_penalty": 1.15,
-                            "system_prompt": "You are an expert accessibility auditor. Always respond with valid JSON format."
+                            "system_prompt": "You are an expert design quality auditor. Always respond with valid JSON format."
                         }
                     )
 

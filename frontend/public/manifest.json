@@ -1,7 +1,7 @@
 {
-  "short_name": "Accessibility Analyzer",
-  "name": "Infotainment Accessibility Analyzer",
-  "description": "Detect and fix WCAG 2.2 compliance issues in infotainment systems using multiple LLMs",
+  "short_name": "Interface Aesthetics Evaluator",
+  "name": "Interface Aesthetics Evaluator",
+  "description": "Detect and fix aesthetic issues in web and mobile interfaces using multiple LLMs",
   "icons": [
     {
       "src": "favicon.ico",
@@ -25,7 +25,7 @@
   "background_color": "#ffffff",
   "orientation": "portrait-primary",
   "scope": "/",
-  "categories": ["productivity", "developer", "accessibility"],
+  "categories": ["productivity", "developer", "design"],
   "lang": "en-US",
   "dir": "ltr"
 }

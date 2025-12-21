@@ -317,7 +317,7 @@ class ReportGenerator:
             if isinstance(model_results, list):
                 for file_result in model_results:
                     for issue in file_result.get('issues', []):
-                        principle = issue.get('principle_id', issue.get('wcag_guideline', 'Unknown'))
+                        principle = issue.get('principle_id', issue.get('aesthetic_guideline', issue.get('wcag_guideline', 'Unknown')))
                         if principle not in principle_issues:
                             principle_issues[principle] = []
 
@@ -525,7 +525,7 @@ class ReportGenerator:
         # Appendix B: Aesthetic Principles Reference
         story.append(Paragraph("Appendix B: Aesthetic Principles Reference", self.styles['Heading3']))
 
-        aesthetic_summary = """
+        principles_summary = """
         This analysis is based on modern design principles and aesthetic best practices, 
         which provide recommendations for creating visually appealing and well-designed interfaces. 
         The principles are organized under 8 categories:
@@ -542,7 +542,7 @@ class ReportGenerator:
         Each issue has a severity level: critical, high, medium, or low.
         """
 
-        story.append(Paragraph(wcag_summary, self.styles['Normal']))
+        story.append(Paragraph(principles_summary, self.styles['Normal']))
         story.append(Spacer(1, 0.3 * inch))
 
         # Appendix C: Methodology
@@ -792,7 +792,7 @@ class ReportGenerator:
                             model,
                             file_name,
                             issue.get('issue_id', ''),
-                            issue.get('principle_id', issue.get('wcag_guideline', '')),
+                            issue.get('principle_id', issue.get('aesthetic_guideline', issue.get('wcag_guideline', ''))),
                             issue.get('severity', ''),
                             issue.get('category', ''),
                             issue.get('description', ''),

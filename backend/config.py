@@ -32,7 +32,7 @@ class Settings(BaseSettings):
     RATE_LIMIT_PER_HOUR: int = 1000  # requests per hour per IP
     
     # Database
-    DATABASE_URL: str = "sqlite:///./accessibility_analyzer.db"
+    DATABASE_URL: str = "sqlite:///./aesthetics_analyzer.db"
     
     # LLM API Keys (loaded from environment)
     OPENAI_API_KEY: str = ""
@@ -48,7 +48,7 @@ class Settings(BaseSettings):
     
     # Logging
     LOG_LEVEL: str = "INFO"
-    LOG_FILE: str = "accessibility_analyzer.log"
+    LOG_FILE: str = "aesthetics_analyzer.log"
     LOG_JSON_FORMAT: bool = True
     
     # Error Tracking (Sentry)

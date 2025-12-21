@@ -11,8 +11,8 @@ module.exports = {
         'mono': ['Fira Code', 'ui-monospace', 'SFMono-Regular', 'Menlo', 'Monaco', 'Consolas', 'Liberation Mono', 'Courier New', 'monospace'],
       },
       colors: {
-        // Custom brand colors for accessibility theme
-        'accessibility': {
+        // Custom brand colors for aesthetics theme
+        'aesthetics': {
           50: '#f0f9ff',
           100: '#e0f2fe',
           200: '#bae6fd',
@@ -24,20 +24,20 @@ module.exports = {
           800: '#075985',
           900: '#0c4a6e',
         },
-        // WCAG severity colors
+        // Severity colors
         'severity': {
           'a': '#dc2626',      // red-600
           'aa': '#ea580c',     // orange-600
           'aaa': '#ca8a04',    // yellow-600
         },
-        // WCAG category colors
+        // Category colors
         'category': {
           'perceivable': '#2563eb',    // blue-600
           'operable': '#16a34a',       // green-600
           'understandable': '#9333ea', // purple-600
           'robust': '#4f46e5',         // indigo-600
         },
-        // Custom grays with better accessibility
+        // Custom grays with better contrast
         'gray': {
           50: '#f9fafb',
           100: '#f3f4f6',
@@ -133,7 +133,7 @@ module.exports = {
       strategy: 'class',
     }),
 
-    // Custom plugin for accessibility utilities
+    // Custom plugin for design utilities
     function({ addUtilities, addComponents, theme }) {
       // Add screen reader only utility
       addUtilities({

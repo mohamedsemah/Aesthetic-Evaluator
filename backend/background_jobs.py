@@ -156,7 +156,7 @@ def init_celery(broker_url: str = None, result_backend: str = None) -> bool:
         result_backend = result_backend or getattr(settings, 'CELERY_RESULT_BACKEND', 'redis://localhost:6379/0')
         
         celery_app = Celery(
-            'accessibility_analyzer',
+            'aesthetics_analyzer',
             broker=broker_url,
             backend=result_backend
         )
@@ -204,7 +204,7 @@ def task(name: str = None, **kwargs):
     Decorator to create a background task
     
     Usage:
-        @task(name='analyze_accessibility')
+        @task(name='analyze_aesthetics')
         def analyze_file(file_path: str):
             # Do work
             return result
@@ -289,9 +289,9 @@ async def get_job_result(job_id: str) -> Optional[Any]:
 
 
 # Example background tasks
-@task(name='analyze_accessibility_async')
-def analyze_accessibility_async(session_id: str, file_path: str, model: str):
-    """Example: Analyze accessibility in background"""
+@task(name='analyze_aesthetics_async')
+def analyze_aesthetics_async(session_id: str, file_path: str, model: str):
+    """Example: Analyze aesthetics in background"""
     # This would call the actual analysis logic
     # For now, it's a placeholder
     logger.info(f"Background analysis started for session {session_id}")

@@ -11,7 +11,7 @@ backend_dir = Path(__file__).parent.parent
 sys.path.insert(0, str(backend_dir))
 
 # Set test environment variables
-os.environ["DATABASE_URL"] = "sqlite:///./test_accessibility_analyzer.db"
+os.environ["DATABASE_URL"] = "sqlite:///./test_aesthetics_analyzer.db"
 os.environ["DEBUG"] = "True"
 os.environ["AUTH_REQUIRED"] = "False"
 
@@ -21,7 +21,7 @@ def setup_test_environment():
     # Create test database
     yield
     # Cleanup test database
-    test_db = Path("test_accessibility_analyzer.db")
+    test_db = Path("test_aesthetics_analyzer.db")
     if test_db.exists():
         test_db.unlink()
 

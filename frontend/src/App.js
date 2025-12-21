@@ -855,7 +855,7 @@ function App() {
                     <div className="flex-1">
                       <div className="flex items-center gap-3 mb-2 flex-wrap">
                         <h4 className="text-lg font-bold text-[hsl(var(--text-primary))]">
-                          {issue.principle_id || issue.wcag_guideline || 'Aesthetic Issue'}
+                          {issue.principle_id || issue.aesthetic_guideline || issue.wcag_guideline || 'Aesthetic Issue'}
                         </h4>
                         <span className={`badge-modern ${getSeverityColor(issue.severity)}`}>
                           {issue.severity || 'medium'}
