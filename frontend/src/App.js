@@ -31,6 +31,16 @@ function App() {
   const [appliedRemediations, setAppliedRemediations] = useState({});
 
   const fileInputRef = useRef(null);
+  const isRestoringRef = useRef(false);
+
+  // Scroll to top on page load to prevent auto-scroll
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    // Prevent browser from restoring scroll position
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual';
+    }
+  }, []);
 
   // Restore session from localStorage on mount
   useEffect(() => {
@@ -43,6 +53,8 @@ function App() {
         return;
       }
 
+      isRestoringRef.current = true;
+
       try {
         console.log('Fetching session data from backend...');
         const response = await fetch(`${API_BASE}/session/${savedSessionId}`);
@@ -50,6 +62,7 @@ function App() {
         if (!response.ok) {
           console.warn('Session not found or expired, clearing localStorage');
           localStorage.removeItem('aesthetic_session_id');
+          isRestoringRef.current = false;
           return;
         }
 
@@ -72,21 +85,32 @@ function App() {
         } else {
           console.log('Session restored but no files/results, staying on welcome page');
         }
+        
+        // Scroll to top after restoring
+        setTimeout(() => {
+          window.scrollTo(0, 0);
+          isRestoringRef.current = false;
+        }, 100);
       } catch (error) {
         console.error('Failed to restore session:', error);
         localStorage.removeItem('aesthetic_session_id');
+        isRestoringRef.current = false;
       }
     };
 
     restoreSession();
   }, []);
 
-  // Save sessionId to localStorage whenever it changes
+  // Save sessionId to localStorage whenever it changes (but not during restoration)
   useEffect(() => {
+    // Skip localStorage updates during restoration to prevent removal
+    if (isRestoringRef.current) return;
+    
     if (sessionId) {
       localStorage.setItem('aesthetic_session_id', sessionId);
       console.log('SessionId saved to localStorage:', sessionId);
     } else {
+      // Only remove if we're not in the middle of restoring
       localStorage.removeItem('aesthetic_session_id');
       console.log('SessionId removed from localStorage');
     }
