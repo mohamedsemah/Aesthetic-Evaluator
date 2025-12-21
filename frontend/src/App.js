@@ -36,17 +36,25 @@ function App() {
   useEffect(() => {
     const restoreSession = async () => {
       const savedSessionId = localStorage.getItem('aesthetic_session_id');
-      if (!savedSessionId) return;
+      console.log('Checking for saved session:', savedSessionId);
+      
+      if (!savedSessionId) {
+        console.log('No saved session found');
+        return;
+      }
 
       try {
+        console.log('Fetching session data from backend...');
         const response = await fetch(`${API_BASE}/session/${savedSessionId}`);
+        
         if (!response.ok) {
-          // Session not found or expired, clear it
+          console.warn('Session not found or expired, clearing localStorage');
           localStorage.removeItem('aesthetic_session_id');
           return;
         }
 
         const sessionData = await response.json();
+        console.log('Session data retrieved:', sessionData);
         
         // Restore session state
         setSessionId(savedSessionId);
@@ -56,9 +64,13 @@ function App() {
         
         // Determine which page to show based on session state
         if (sessionData.analysis_results && Object.keys(sessionData.analysis_results).length > 0) {
+          console.log('Restoring to results page');
           setCurrentPage('results');
         } else if (sessionData.files && sessionData.files.length > 0) {
+          console.log('Restoring to analyze page');
           setCurrentPage('analyze');
+        } else {
+          console.log('Session restored but no files/results, staying on welcome page');
         }
       } catch (error) {
         console.error('Failed to restore session:', error);
@@ -116,6 +128,7 @@ function App() {
 
       const result = await response.json();
       const newSessionId = result.session_id;
+      console.log('New session created:', newSessionId);
       setSessionId(newSessionId);
       setFiles(result.files);
       // Clear previous analysis results when starting a new session
